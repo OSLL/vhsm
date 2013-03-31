@@ -1,4 +1,4 @@
 build:
-	gcc sample.c -o sample -ggdb3 -ldl -I /usr/local/include/opencryptoki
+	gcc sample.c -o sample -ggdb3 -ldl
 clean:
 	rm *.o *~ sample -rf
