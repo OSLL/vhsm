@@ -74,7 +74,7 @@ CK_RV print_mechanisms(CK_SLOT_ID slot) {
   printf("Mechanisms available:\n");
   
   for (i = 0; i != mechanisms_count; ++i) {
-    printf("0x%.8lX, ", mechanisms[i]);
+    printf("0x%.8lX ", mechanisms[i]);
   }
   
   printf("\n");
