@@ -13,10 +13,10 @@ static void * pkcs11_so;
 static CK_RV (*C_Initialize)(CK_VOID_PTR);
 static CK_RV (*C_Finalize)(CK_VOID_PTR);
 
-CK_RV load_symbol(void * target, char const * sym_name) {
+CK_RV load_symbol(void ** target, char const * sym_name) {
   dlerror(); //clear any old error conditions
-  target = dlsym(pkcs11_so, sym_name);
-  if (!target) {
+  *target = dlsym(pkcs11_so, sym_name);
+  if (!*target) {
     char const * err = dlerror();
     if (0 != err) {
       fprintf(stderr, "Error loading '%s' symbol: %s\n", sym_name, err);
@@ -27,17 +27,17 @@ CK_RV load_symbol(void * target, char const * sym_name) {
 }
 
 CK_RV load_c_initialize() {
-  return load_symbol(C_Initialize, "C_Initialize");
+  return load_symbol((void **)&C_Initialize, "C_Initialize");
 }
 
 CK_RV load_c_finalize() {
-  return load_symbol(C_Finalize, "C_Finalize");
+  return load_symbol((void **)&C_Finalize, "C_Finalize");
 }
 
 CK_RV load_pkcs11() {
   CK_RV rv;
   
-  pkcs11_so = dlopen(PKCS11_SO_NAME, RTLD_LAZY);
+  pkcs11_so = dlopen(PKCS11_SO_NAME, RTLD_NOW);
   if (!pkcs11_so) {
     fprintf(stderr, "Error loading pkcs#11 so: %s\n", dlerror());
     return CKR_GENERAL_ERROR;
