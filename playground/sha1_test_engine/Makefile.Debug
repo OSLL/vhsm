@@ -1,0 +1,11 @@
+all: test_engine test_app
+
+test_engine: main.c
+	gcc -std=c99 -ggdb3 -c -fPIC main.c
+	gcc -ggdb3 -shared -fPIC -o test_engine.so main.o -L/home/user/openssl_build_2/lib -lcrypto -lssl -ldl
+
+test_app: test.c
+	gcc -std=c99 -ggdb3 -o test_app test.c -Wl,-rpath=/home/user/openssl_build_2/lib -L/home/user/openssl_build_2/lib -lcrypto -lssl -ldl
+
+clean:
+	rm -f *.o *.so test_app
