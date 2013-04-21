@@ -29,7 +29,7 @@ vhsm_rv vhsm_digest_init(vhsm_session session, vhsm_digest_method method);
 
 // Continues digesting with passed data chunk.
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED,
-//             VHSM_RV_DIGEST_NOT_INITIALIZED
+//             VHSM_RV_DIGEST_NOT_INITIALIZED, VHSM_RV_BAD_ARGUMENTS
 vhsm_rv vhsm_digest_update(vhsm_session session, unsigned char const * data_chunk, unsigned int chunk_size);
 
 // Continues digesting with a key identified by passed key id.

@@ -41,6 +41,9 @@ typedef int vhsm_rv;
 // key with passed key_id was not found
 #define VHSM_RV_KEY_NOT_FOUND 0x00000008
 
+//illegal mac method passed to a function
+#define VHSM_RV_BAD_MAC_METHOD 0x0000000D
+
 // mac init function failed
 #define VHSM_RV_MAC_INIT_ERR 0x0000000A
 // mac_update or mac_end were called prior to mac_init
@@ -62,7 +65,7 @@ typedef struct {
 } vhsm_credentials;
 
 // Start a new session. Session structure pointed to by session_ptr is initialized if this call succeeds.
-// Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION
+// Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_BAD_ARGUMENTS
 vhsm_rv vhsm_start_session(vhsm_session * session_ptr);
 
 // End session.
