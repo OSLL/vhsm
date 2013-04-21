@@ -1,10 +1,13 @@
 #include <vhsm_api_prototype/digest.h>
 
+int is_valid_sha1_params(void * params) {
+  return 0 == params;
+}
+
 int is_valid_digest_method(vhsm_digest_method method) {
   switch (method.digest_method) {
   case VHSM_DIGEST_SHA1 : {
-    //TODO ensure parameters are valid.
-    return 0 == method.method_params;
+    return is_valid_sha1_params(method.method_params);
   }
   default : {
     return 0;
@@ -20,9 +23,14 @@ vhsm_rv vhsm_digest_init(vhsm_session session, vhsm_digest_method method) {
     return VHSM_RV_BAD_DIGEST_METHOD;
   }
   
-  //TODO call some transport function
-  
-  return VHSM_RV_OK;
+  switch (method.digest_method) {
+  case VHSM_DIGEST_SHA1 : {
+    return vhsm_tr_digest_init_sha1(session);
+  }
+  default : {
+    return VHSM_RV_BAD_DIGEST_METHOD;
+  }
+  }
 }
 
 // Continues digesting with passed data chunk.
@@ -33,17 +41,14 @@ vhsm_rv vhsm_digest_update(vhsm_session session, unsigned char const * data_chun
     return VHSM_RV_BAD_ARGUMENTS;
   }
   
-  //TODO call some transport function
-  
-  return VHSM_RV_OK;
+  return vhsm_tr_digest_update(session, data_chunk, chunk_size);
 }
 
 // Continues digesting with a key identified by passed key id.
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED,
 //             VHSM_RV_DIGEST_NOT_INITIALIZED, VHSM_RV_KEY_NOT_FOUND
 vhsm_rv vhsm_digest_key(vhsm_session session, vhsm_key_id key_id) {
-  //TODO call some transport function
-  return VHSM_RV_OK;
+  return vhsm_tr_digest_key(session, key_id);
 }
 
 // Ends digesting operation. The computed digest is stored in buffer pointed to by digest_ptr.
@@ -53,11 +58,25 @@ vhsm_rv vhsm_digest_key(vhsm_session session, vhsm_key_id key_id) {
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED,
 //             VHSM_RV_DIGEST_NOT_INITIALIZED, VHSM_RV_BAD_BUFFER_SIZE, VHSM_RV_BAD_BUFFER_SIZE
 vhsm_rv vhsm_digest_end(vhsm_session session, unsigned char * digest_ptr, unsigned int * digest_size_ptr) {
+  int digest_size = 0;
+  vhsm_rv rv = VHSM_RV_OK;
+  
   if (0 == digest_size_ptr) {
     return VHSM_RV_BAD_ARGUMENTS;
   }
   
-  //TODO call some transport function: determine size, if buffer is big enough request the data and copy it here else return
+  rv = vhsm_tr_digest_get_size(session, &digest_size);
+  if (VHSM_RV_OK != rv) {
+    return rv;
+  }
   
-  return VHSM_RV_OK;
+  if (0 != digest_ptr && *digest_size_ptr >= digest_size) {
+    rv = vhsm_tr_digest_end(session, digest_ptr, digest_size);
+  } else {
+    rv = VHSM_RV_BAD_BUFFER_SIZE;
+  }
+  
+  *digest_size_ptr = digest_size;
+  
+  return rv;
 }
