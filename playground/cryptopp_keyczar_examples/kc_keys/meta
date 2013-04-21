@@ -1,0 +1,11 @@
+{
+   "encrypted": false,
+   "name": "test key",
+   "purpose": "SIGN_AND_VERIFY",
+   "type": "HMAC_SHA1",
+   "versions": [ {
+      "exportable": false,
+      "status": "PRIMARY",
+      "versionNumber": 1
+   } ]
+}
