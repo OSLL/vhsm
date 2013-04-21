@@ -107,14 +107,14 @@ static int update_remote_ctx(vhsm_key_id *key_id, int phase, const void *data, s
 }
 
 static int final_remote_ctx(int phase, unsigned char *md) {
-//    unsigned int len;
+    unsigned int len;
     switch(phase) {
     case FINAL_START:
         remote_ctx.skip_update = 1;
         return 1;
     case FINAL_END: {
         remote_ctx.skip_update = 0;
-        return vhsm_mac_end(te_vhsm_session, md, 20) == VHSM_RV_OK; //temporary
+        return vhsm_mac_end(te_vhsm_session, md, &len) == VHSM_RV_OK;
 //        int res = HMAC_Final(&remote_ctx.hctx, md, &len);
 //        HMAC_CTX_cleanup(&remote_ctx.hctx);
 //        return res;
