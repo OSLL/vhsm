@@ -38,4 +38,4 @@ vhsm_rv vhsm_mac_update(vhsm_session session, unsigned char const * data_chunk, 
 // the mac is copied to the location pointed to by mac_ptr.
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED, VHSM_RV_MAC_NOT_INITIALIZED,
 //             VHSM_RV_BAD_BUFFER_SIZE
-vhsm_rv vhsm_mac_end(vhsm_session session, unsigned char *mac_ptr, unsigned int mac_size_ptr);
+vhsm_rv vhsm_mac_end(vhsm_session session, unsigned char * mac_ptr, unsigned int * mac_size_ptr);
