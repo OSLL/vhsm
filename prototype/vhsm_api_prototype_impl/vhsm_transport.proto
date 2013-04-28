@@ -13,6 +13,19 @@ message VhsmRawData {
   required bytes data = 1;
 }
 
+//all possible error codes are listed here
+enum ErrorCode {
+  ERR_BAD_ARGUMENTS = 1;
+  ERR_BAD_SESSION = 2;
+  ERR_BAD_DIGEST_METHOD = 3;
+  ERR_DIGEST_INIT = 4;
+  ERR_DIGEST_NOT_INITIALIZED = 5;
+  ERR_KEY_NOT_FOUND = 6;
+  ERR_BAD_MAC_METHOD = 7;
+  ERR_MAC_INIT = 8;
+  ERR_MAC_NOT_INITIALIZED = 9;
+  ERR_VHSM_ERROR = 10;
+}
 
 
 //
@@ -128,7 +141,7 @@ message VhsmMacMessage {
   optional Update update_message = 3;
 }
 
-//main vhsm message class
+//main vhsm message class - all messages to vhsm should be sent using this message type
 //message contents depends on message_class property's value
 message VhsmMessage {
   required VhsmMessageClass message_class = 1;
@@ -138,3 +151,23 @@ message VhsmMessage {
   optional VhsmMacMessage mac_message = 4;
 }
 
+
+//main vhsm response class - all responses from vhsm should be passed using this message type
+message VhsmResponse {
+  
+  enum ResponseType {
+    ERROR = 1;
+    OK = 2;
+    RAW_DATA = 3;
+    UNSIGNED_INT = 4;
+    SESSION = 5;
+  }
+  
+  required ResponseType type = 1;
+  
+  optional ErrorCode error_code = 2;
+  
+  optional VhsmRawData raw_data = 3;
+  optional uint32 unsigned_int = 4;
+  optional VhsmSession session = 5;
+}

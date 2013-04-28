@@ -18,6 +18,9 @@ typedef int vhsm_rv;
 // successful function call
 #define VHSM_RV_OK 0x0
 
+// general error
+#define VHSM_RV_ERR 0xFFFFFFFF
+
 // passed buffer's size is less than required
 #define VHSM_RV_BAD_BUFFER_SIZE 0x00000009
 // bad arguments

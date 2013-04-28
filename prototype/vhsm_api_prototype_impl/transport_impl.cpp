@@ -1,5 +1,13 @@
+#include <algorithm>
 #include "vhsm_transport.pb.h"
 
+
+//sends passed message and receives a response which is set by reference.
+//on successful call (no error occurred during transportation) returns true, else false.
+static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
+  //TODO implement when transport mechanism is available.
+  return false;
+}
 
 //
 //transport.h implementation
@@ -7,9 +15,87 @@
 
 #include "transport.h"
 
+
+//converts error code from one used in protobuf messages to VHSM_RV_* code.
+static vhsm_rv convert_error_code(ErrorCode error) {
+  switch(error) {
+    case ERR_BAD_ARGUMENTS : return VHSM_RV_BAD_ARGUMENTS;
+    case ERR_BAD_SESSION : return VHSM_RV_BAD_SESSION;
+    case ERR_BAD_DIGEST_METHOD : return VHSM_RV_BAD_DIGEST_METHOD;
+    case ERR_DIGEST_INIT : return VHSM_RV_DIGEST_INIT_ERR;
+    case ERR_DIGEST_NOT_INITIALIZED : return VHSM_RV_DIGEST_NOT_INITIALIZED;
+    case ERR_KEY_NOT_FOUND : return VHSM_RV_KEY_NOT_FOUND;
+    case ERR_BAD_MAC_METHOD : return VHSM_RV_BAD_MAC_METHOD;
+    case ERR_MAC_INIT : return VHSM_RV_MAC_INIT_ERR;
+    case ERR_MAC_NOT_INITIALIZED : return VHSM_RV_MAC_NOT_INITIALIZED;
+    default : return VHSM_RV_ERR;
+  }
+}
+
+static vhsm_rv send_message_ok_response(VhsmMessage const & message, VhsmResponse & response) {
+  if (!send_message(message, response)) {
+    return VHSM_RV_ERR;
+  }
+  
+  switch (response.type()) {
+    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::OK : return VHSM_RV_OK;
+    default : return VHSM_RV_ERR;
+  }
+}
+
+static vhsm_rv send_message_unsigned_int_response(VhsmMessage const & message,
+                                                  VhsmResponse & response,
+                                                  unsigned int * r) {
+  if (!send_message(message, response)) {
+    return VHSM_RV_ERR;
+  }
+  
+  switch (response.type()) {
+    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::UNSIGNED_INT : {
+      if (!response.has_unsigned_int()) {
+        return VHSM_RV_ERR;
+      }
+      *r = response.unsigned_int();
+      return VHSM_RV_OK;
+    }
+    default : return VHSM_RV_ERR;
+  }
+}
+
+static vhsm_rv send_message_raw_data_response(VhsmMessage const & message,
+                                              VhsmResponse & response,
+                                              unsigned char * buf,
+                                              unsigned int buf_sz) {
+  if (!send_message(message, response)) {
+    return VHSM_RV_ERR;
+  }
+  
+  switch (response.type()) {
+    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::RAW_DATA : {
+      if (!response.has_raw_data()) {
+        return VHSM_RV_ERR;
+      }
+      
+      if (response.raw_data().data().size() > buf_sz) {
+        return VHSM_RV_BAD_BUFFER_SIZE;
+      }
+      
+      unsigned char const * data = (unsigned char const *) response.raw_data().data().data();
+      std::copy(data, data + response.raw_data().data().size(), buf);
+      
+      return VHSM_RV_OK;
+    }
+    default : return VHSM_RV_ERR;
+  }
+}
+
 //
 // common functions
 //
+
 
 static VhsmMessage create_session_message(VhsmSessionMessage_MessageType type) {
   VhsmMessage message;
@@ -23,20 +109,30 @@ static VhsmMessage create_session_message(VhsmSessionMessage_MessageType type) {
 
 vhsm_rv vhsm_tr_start_session(vhsm_session * session_ptr) {
   VhsmMessage message = create_session_message(VhsmSessionMessage::START);
+  VhsmResponse response;
   
-  //TODO send the message and receive answer.
+  if (!send_message(message, response)) {
+    return VHSM_RV_ERR;
+  }
   
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  switch (response.type()) {
+    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::SESSION : {
+      if (!response.has_session()) {
+        return VHSM_RV_ERR;
+      }
+      session_ptr->sid = response.session().sid();
+      return VHSM_RV_OK;
+    }
+    default : return VHSM_RV_ERR;
+  }
 }
 
 vhsm_rv vhsm_tr_end_session(vhsm_session session) {
   VhsmMessage message = create_session_message(VhsmSessionMessage::END);
+  VhsmResponse response;
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_login(vhsm_session session, vhsm_credentials credentials) {
@@ -56,6 +152,7 @@ vhsm_rv vhsm_tr_logout(vhsm_session session) {
 
 vhsm_rv vhsm_tr_digest_init_sha1(vhsm_session session) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
@@ -65,14 +162,12 @@ vhsm_rv vhsm_tr_digest_init_sha1(vhsm_session session) {
           mutable_mechanism()->
           set_mid(SHA1);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_digest_update(vhsm_session session, unsigned char const * data_chunk, unsigned int chunk_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
@@ -82,14 +177,12 @@ vhsm_rv vhsm_tr_digest_update(vhsm_session session, unsigned char const * data_c
           mutable_data_chunk()->
           set_data(std::string((char const *)data_chunk, chunk_size));
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_digest_key(vhsm_session session, vhsm_key_id key_id) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
@@ -97,39 +190,31 @@ vhsm_rv vhsm_tr_digest_key(vhsm_session session, vhsm_key_id key_id) {
   message.mutable_digest_message()->
           mutable_update_key_message()->
           mutable_key_id()->
-          set_id(std::string((char const *) key_id.id, sizeof(key_id.id) / sizeof(key_id.id[0])));
+          set_id((void const *) key_id.id, sizeof(key_id.id));
   
-  
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
-vhsm_rv vhsm_tr_digest_get_size(vhsm_session session, unsigned int * mac_size) {
+vhsm_rv vhsm_tr_digest_get_size(vhsm_session session, unsigned int * digest_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
           set_type(VhsmDigestMessage::GET_DIGEST_SIZE);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_unsigned_int_response(message, response, digest_size);
 }
 
 vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, unsigned int digest_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
           set_type(VhsmDigestMessage::END);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_raw_data_response(message, response, digest_ptr, digest_size);
 }
 
 
@@ -139,6 +224,7 @@ vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, uns
 
 vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
@@ -154,14 +240,12 @@ vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
           mutable_digest_mechanism()->
           set_mid(SHA1);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_mac_update(vhsm_session session, unsigned char const * data_chunk, unsigned int chunk_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
@@ -169,36 +253,29 @@ vhsm_rv vhsm_tr_mac_update(vhsm_session session, unsigned char const * data_chun
   message.mutable_mac_message()->
           mutable_update_message()->
           mutable_data_chunk()->
-          set_data(std::string((char const *)data_chunk, chunk_size));
+          set_data((void const *)data_chunk, chunk_size);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_mac_get_size(vhsm_session session, unsigned int * mac_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
           set_type(VhsmMacMessage::GET_MAC_SIZE);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_unsigned_int_response(message, response, mac_size);
 }
 
 vhsm_rv vhsm_tr_mac_end(vhsm_session session, unsigned char * mac_ptr, unsigned int mac_size) {
   VhsmMessage message;
+  VhsmResponse response;
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
           set_type(VhsmMacMessage::GET_MAC_SIZE);
   
-  //TODO send the message and receive answer.
-  
-  //TODO replace with appropriate rv
-  return VHSM_RV_OK;
+  return send_message_raw_data_response(message, response, mac_ptr, mac_size);
 }
