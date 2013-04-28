@@ -1,0 +1,140 @@
+//corresponds to vhsm_session structure defined in common.h
+message VhsmSession {
+  required sint64 sid = 1;
+}
+
+//corresponds to vhsm_key_id structure defined in common.h
+message VhsmKeyId {
+  required bytes id = 1;
+}
+
+//message type for all raw data message parts.
+message VhsmRawData {
+  required bytes data = 1;
+}
+
+
+
+//
+//digest data
+//
+
+//enumeration of all supproted digest mechanism types
+enum VhsmDigestMechanismId {
+  SHA1 = 1;
+}
+
+//digest mechanism type + corresponding parameters
+message VhsmDigestMechanism {
+  required VhsmDigestMechanismId mid = 1;
+  
+  //TODO add parameters for methods requiring parameters
+}
+
+
+//
+//MAC data
+//
+
+//enumeration of all supported MAC mechanisms
+enum VhsmMacMechanismId {
+  HMAC = 1;
+}
+
+//mac mechanism type + corresponding mechanism parameters
+message VhsmMacMechanism {
+  
+  //parameters message for VhsmMacMechanismId::HMAC type.
+  message HmacParameters {
+    required VhsmDigestMechanism digest_mechanism = 1;
+  }
+  
+  required VhsmMacMechanismId mid = 1;
+  
+  //parameters VhsmMacMechanismId::HMAC type.
+  optional HmacParameters hmac_parameters = 2;
+  
+  //TODO add parameters for methods requiring parameters
+}
+
+//enumeration of all supported message classes
+enum VhsmMessageClass {
+  SESSION = 1;
+  DIGEST = 2;
+  MAC = 3;
+}
+
+
+//Corresponds to VhsmMessageClass::SESSION
+message VhsmSessionMessage {
+  enum MessageType {
+    START = 1;
+    END = 2;
+  }
+  
+  required MessageType type = 1;
+}
+
+//Corresponds to VhsmDigestMessage::DIGEST
+message VhsmDigestMessage {
+  enum MessageType {
+    INIT = 1;
+    UPDATE = 2;
+    UPDATE_KEY = 3;
+    GET_DIGEST_SIZE = 4;
+    END = 5;
+  }
+  
+  message Init {
+    required VhsmDigestMechanism mechanism = 1;
+  }
+  
+  message Update {
+    required VhsmRawData data_chunk = 1;
+  }
+  
+  message UpdateKey {
+    required VhsmKeyId key_id = 1;
+  }
+  
+  required MessageType type = 1;
+  
+  optional Init init_message = 2;
+  optional Update update_message = 3;
+  optional UpdateKey update_key_message = 4;
+}
+
+//Corresponds to VhsmDigestMessage::MAC
+message VhsmMacMessage {
+  enum MessageType {
+    INIT = 1;
+    UPDATE = 2;
+    GET_MAC_SIZE = 3;
+    END = 4;
+  }
+  
+  message Init {
+    required VhsmMacMechanism mechanism = 1;
+  }
+  
+  message Update {
+    required VhsmRawData data_chunk = 1;
+  }
+  
+  
+  required MessageType type = 1;
+  
+  optional Init init_message = 2;
+  optional Update update_message = 3;
+}
+
+//main vhsm message class
+//message contents depends on message_class property's value
+message VhsmMessage {
+  required VhsmMessageClass message_class = 1;
+  
+  optional VhsmSessionMessage session_message = 2;
+  optional VhsmDigestMessage digest_message = 3;
+  optional VhsmMacMessage mac_message = 4;
+}
+

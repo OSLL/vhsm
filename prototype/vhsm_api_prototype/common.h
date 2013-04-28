@@ -88,5 +88,5 @@ vhsm_rv vhsm_logout(vhsm_session session);
 
 // key identificator
 typedef struct {
-  char id[128];
+  unsigned char id[128];
 } vhsm_key_id;
