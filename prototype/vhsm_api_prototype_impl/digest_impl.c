@@ -1,5 +1,7 @@
 #include <vhsm_api_prototype/digest.h>
 
+#include "transport.h"
+
 int is_valid_sha1_params(void * params) {
   return 0 == params;
 }
@@ -58,7 +60,7 @@ vhsm_rv vhsm_digest_key(vhsm_session session, vhsm_key_id key_id) {
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED,
 //             VHSM_RV_DIGEST_NOT_INITIALIZED, VHSM_RV_BAD_BUFFER_SIZE, VHSM_RV_BAD_BUFFER_SIZE
 vhsm_rv vhsm_digest_end(vhsm_session session, unsigned char * digest_ptr, unsigned int * digest_size_ptr) {
-  int digest_size = 0;
+  unsigned int digest_size = 0;
   vhsm_rv rv = VHSM_RV_OK;
   
   if (0 == digest_size_ptr) {

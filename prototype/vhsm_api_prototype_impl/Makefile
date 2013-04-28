@@ -1,4 +1,4 @@
-CC = gcc -I.. -c
+CC = g++ -I.. -c
 LD = ld
 
 OBJECTS = common_impl.o digest_impl.o mac_impl.o
