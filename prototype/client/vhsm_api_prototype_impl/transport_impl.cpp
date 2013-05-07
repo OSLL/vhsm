@@ -1,5 +1,5 @@
 #include <algorithm>
-#include "vhsm_transport.pb.h"
+#include <vhsm_transport.pb.h>
 
 
 //sends passed message and receives a response which is set by reference.
