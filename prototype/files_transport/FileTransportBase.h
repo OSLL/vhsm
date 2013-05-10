@@ -16,7 +16,7 @@ public:
   }
   
   bool close() {
-    if (-1 == my_fd) {
+    if (!is_opened()) {
       return true;
     }
     
@@ -33,13 +33,17 @@ public:
     close();
   }
   
+  bool is_opened() {
+    return -1 != my_fd;
+  }
+  
 protected:
   bool lock() {
-    return -1 != my_fd && -1 != flock(fd, LOCK_EX);
+    return is_opened() && -1 != flock(fd, LOCK_EX);
   }
   
   bool unlock() {
-    return -1 == my_fd || -1 != flock(fd, LOCK_UN);
+    return !is_opened() || -1 != flock(fd, LOCK_UN);
   }
   
   bool seek_start() {
@@ -55,14 +59,14 @@ protected:
   }
   
   ssize_t read(void * buf, size_t count) {
-    if (-1 == my_fd) {
+    if (!is_opened()) {
       return -1;
     }
     return read(my_fd, buf, count);
   }
   
   ssize_t write(void const * buf, size_t count) {
-    if (-1 == my_fd) {
+    if (!is_opened()) {
       return -1;
     }
     
@@ -70,7 +74,7 @@ protected:
   }
   
   ssize_t file_size() {
-    if (-1 == my_fd) {
+    if (!is_opened()) {
       return -1;
     }
     
