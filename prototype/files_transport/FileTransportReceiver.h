@@ -122,6 +122,8 @@ private:
       return RM_ERROR;
     }
     
+    wipe();
+    
     return RM_OK;
   }
 };

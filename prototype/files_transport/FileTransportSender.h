@@ -54,7 +54,7 @@ private:
     msg.sender_id = sender_id;
     msg.msg_size = size;
     
-    if (!seek_start()) {
+    if (!wipe()) {
       return -1;
     }
     
