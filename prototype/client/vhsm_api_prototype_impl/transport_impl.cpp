@@ -1,12 +1,68 @@
 #include <algorithm>
 #include <vhsm_transport.pb.h>
 
+#include <FileTransportSender.h>
+#include <FileTransportReceiver.h>
+
+//these are to be replaced with some sort of configuration
+static char const * RECV_FILENAME = "recv_data";
+static char const * SEND_FILENAME = "send_data";
+
+static FileTransportReceiver receiver;
+static FileTransportSender sender;
+
+static bool ensure_transport_opened(FileTransportBase & base, char const * fname) {
+  if (base.is_opened()) {
+    return true;
+  }
+  
+  return base.open(fname);
+}
+
+static bool ensure_sender_opened() {
+  ensure_transport_opened(sender, SEND_FILENAME);
+}
+
+static bool ensure_receiver_opened() {
+  ensure_transport_opened(receiver, RECV_FILENAME);
+}
 
 //sends passed message and receives a response which is set by reference.
 //on successful call (no error occurred during transportation) returns true, else false.
 static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
-  //TODO implement when transport mechanism is available.
-  return false;
+  bool result = false;
+  size_t serialized_sz = message.ByteSize();
+  char * buf = new char[serialized_sz];
+  ssize_t response_sz = 0;
+  
+  if (!message.SerializeToArray(buf, serialized_sz)) {
+    goto cleanup;
+  }
+  
+  if (!sender.send_message(buf, serialized_sz)) {
+    goto cleanup;
+  }
+  
+  response_sz = receiver.get_message_size();
+  if (-1 == response_sz) {
+    goto cleanup;
+  }
+  
+  if (response_sz > serialized_sz) {
+    delete buf;
+    buf = new char[response_sz];
+  }
+  
+  if (FileTransportReceiver::RM_OK != receiver.receive_message(buf, (size_t *)&response_sz)) {
+    goto cleanup;
+  }
+  
+  result = response.ParseFromArray(buf, response_sz);
+  
+  cleanup:
+  delete buf;
+  
+  return result;
 }
 
 //

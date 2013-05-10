@@ -3,7 +3,7 @@
 #include "FileTransportBase.h"
 #include "FileTransportMessage.h"
 
-class FileTransportReceiver : FileTransportBase {
+class FileTransportReceiver : public FileTransportBase {
 private:
   static const useconds_t SLEEP_TIME_USEC = 50000; //50ms
 public:
@@ -45,7 +45,7 @@ public:
   
   enum ReceiveMessageRetVal {RM_BUFFER_TOO_SMALL, RM_ERROR, RM_OK};
   
-  ReceiveMessageRetVal receive_message(void const * buf, size_t * buf_sz_ptr, int * sender_id = (int *)0) {
+  ReceiveMessageRetVal receive_message(void * buf, size_t * buf_sz_ptr, int * sender_id = (int *)0) {
     ReceiveMessageRetVal status = RM_OK;
     
     while(!usleep(SLEEP_TIME_USEC)) {
@@ -101,7 +101,7 @@ private:
     return ftm.msg_size;
   }
   
-  ReceiveMessageRetVal do_receive_message(void const * buf, size_t * buf_sz_ptr, int * sender_id) {
+  ReceiveMessageRetVal do_receive_message(void * buf, size_t * buf_sz_ptr, int * sender_id) {
     FileTransportMessage msg_header;
     
     if (!read_message(&msg_header)) {
@@ -123,6 +123,7 @@ private:
     }
     
     wipe();
+    sync();
     
     return RM_OK;
   }

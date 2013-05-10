@@ -12,7 +12,7 @@ public:
   }
   
   bool open(char const * fname) {
-    return -1 != (my_fd = open(fname, O_RDWR));
+    return -1 != (my_fd = ::open(fname, O_RDWR));
   }
   
   bool close() {
@@ -20,7 +20,7 @@ public:
       return true;
     }
     
-    int retval = close(my_fd);
+    int retval = ::close(my_fd);
     
     if (0 == retval) {
       my_fd = -1;
@@ -39,11 +39,11 @@ public:
   
 protected:
   bool lock() {
-    return is_opened() && -1 != flock(fd, LOCK_EX);
+    return is_opened() && -1 != flock(my_fd, LOCK_EX);
   }
   
   bool unlock() {
-    return !is_opened() || -1 != flock(fd, LOCK_UN);
+    return !is_opened() || -1 != flock(my_fd, LOCK_UN);
   }
   
   bool seek_start() {
@@ -62,7 +62,7 @@ protected:
     if (!is_opened()) {
       return -1;
     }
-    return read(my_fd, buf, count);
+    return ::read(my_fd, buf, count);
   }
   
   ssize_t write(void const * buf, size_t count) {
@@ -70,7 +70,7 @@ protected:
       return -1;
     }
     
-    return write(my_fd, buf, count);
+    return ::write(my_fd, buf, count);
   }
   
   ssize_t file_size() {
@@ -78,11 +78,15 @@ protected:
       return -1;
     }
     
-    off_t old_pos = lseek(my_fd, 0, SEEK_CUR);
-    off_t size = lseek(my_fd, 0, SEEK_END);
-    lseek(my_fd, old_pos, SEEK_SET);
+    off_t old_pos = ::lseek(my_fd, 0, SEEK_CUR);
+    off_t size = ::lseek(my_fd, 0, SEEK_END);
+    ::lseek(my_fd, old_pos, SEEK_SET);
     
     return size;
+  }
+  
+  void sync() {
+    ::syncfs(my_fd);
   }
   
 private:

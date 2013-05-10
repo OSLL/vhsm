@@ -3,7 +3,7 @@
 #include "FileTransportBase.h"
 #include "FileTransportMessage.h"
 
-class FileTransportSender : FileTransportBase {
+class FileTransportSender : public FileTransportBase {
 private:
   static const useconds_t SLEEP_TIME_USEC = 50000; //50ms
 public:
@@ -73,6 +73,8 @@ private:
     }
     
     bytes_written += retval;
+    
+    sync();
     
     return bytes_written;
   }

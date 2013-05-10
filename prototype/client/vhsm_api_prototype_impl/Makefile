@@ -1,4 +1,4 @@
-CC = g++ -I.. -I../../protocol
+CC = g++ -I.. -I../../protocol -I../../files_transport/
 AR = ar crf
 
 OBJECTS = common_impl.o digest_impl.o mac_impl.o transport_impl.o ../../protocol/vhsm_transport.pb.o
