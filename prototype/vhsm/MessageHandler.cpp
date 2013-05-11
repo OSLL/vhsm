@@ -1,4 +1,3 @@
-#include "vhsm_transport.pb.h"
 #include "vhsm.h"
 #include <crypto++/hmac.h>
 #include <crypto++/sha.h>
