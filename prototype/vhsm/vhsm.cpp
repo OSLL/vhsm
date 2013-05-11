@@ -17,6 +17,8 @@ static bool read_message(FileTransportReceiver & receiver, VhsmMessage & msg, Cl
   char * buf = 0;
   bool result = false;
   
+  msg_size = receiver.get_message_size();
+  
   if (-1 == msg_size) {
     std::cerr << "failed to read message size" << std::endl;
     goto cleanup;

@@ -39,12 +39,11 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
     goto cleanup;
   }
   
-  if (!sender.send_message(buf, serialized_sz)) {
+  if (!ensure_sender_opened() || !sender.send_message(buf, serialized_sz)) {
     goto cleanup;
   }
   
-  response_sz = receiver.get_message_size();
-  if (-1 == response_sz) {
+  if (!ensure_receiver_opened() || -1 == (response_sz = receiver.get_message_size())) {
     goto cleanup;
   }
   
@@ -53,7 +52,8 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
     buf = new char[response_sz];
   }
   
-  if (FileTransportReceiver::RM_OK != receiver.receive_message(buf, (size_t *)&response_sz)) {
+  if (!ensure_receiver_opened() ||
+    FileTransportReceiver::RM_OK != receiver.receive_message(buf, (size_t *)&response_sz)) {
     goto cleanup;
   }
   

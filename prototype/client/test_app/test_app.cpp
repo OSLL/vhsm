@@ -1,5 +1,21 @@
 #include <iostream>
 #include <digest.h>
+#include <cstdio>
+
+void print_bytes(unsigned char const * data, size_t n_bytes) {
+  size_t i = 0;
+  
+  printf("0x");
+  
+  if (0 == n_bytes) {
+    printf("0");
+    return;
+  }
+  
+  for (i = 0; i != n_bytes; ++i) {
+    printf("%.2x", (int) data[i]);
+  }
+}
 
 bool test_digest(vhsm_session session) {
   vhsm_rv rv = VHSM_RV_OK;
@@ -35,7 +51,9 @@ bool test_digest(vhsm_session session) {
   }
   
   digest[digest_size] = '\0';
-  std::cout << "digest of an empty string is: " << (char *)digest << std::endl;
+  std::cout << "digest of an empty string is: ";
+  print_bytes(digest, digest_size);
+  std::cout << std::endl;
   
   return true;
 }
