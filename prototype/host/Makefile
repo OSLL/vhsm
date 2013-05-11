@@ -4,4 +4,4 @@ host:
 	$(CC) host.cpp -o host
 
 clean:
-	rm *~ *.o *.out -f
+	rm *~ *.o *.out host -f

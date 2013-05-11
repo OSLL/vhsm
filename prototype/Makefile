@@ -17,4 +17,5 @@ clean:
 	$(MAKE) -C protocol clean
 	$(MAKE) -C vhsm clean
 	$(MAKE) -C files_transport clean
+	$(MAKE) -C host clean
 	rm *~ -f
