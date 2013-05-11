@@ -70,7 +70,7 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
         }
         break;
     case VhsmSessionMessage::END:
-        if(clientSessions.find(id) != clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
+        if(clientSessions.find(id) == clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
         else {
             HMACContextMap::iterator hi = clientContexts.find(id);
             if(hi != clientContexts.end()) {
