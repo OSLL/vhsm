@@ -1,5 +1,9 @@
+CC = g++ -c -I../protocol -lprotobuf -lcryptopp
 
-#TODO add build target
+all: msg_handler
+
+msg_handler: MessageHandler.cpp
+	$(CC) MessageHandler.cpp
 
 clean:
-	rm *~ -f
+	rm -f *.o *~ *.out
