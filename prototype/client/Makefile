@@ -1,4 +1,6 @@
-all: test_application openssl_engine
+#TODO uncomment when openssl_engine is fixed.
+#all: test_application openssl_engine
+all: test_application
 
 test_application: vhsm_api
 	$(MAKE) -C test_app

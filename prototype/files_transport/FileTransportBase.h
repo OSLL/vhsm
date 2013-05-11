@@ -86,7 +86,7 @@ protected:
   }
   
   void sync() {
-    ::syncfs(my_fd);
+    ::sync();
   }
   
 private:
