@@ -331,7 +331,7 @@ vhsm_rv vhsm_tr_mac_end(vhsm_session session, unsigned char * mac_ptr, unsigned 
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
-          set_type(VhsmMacMessage::GET_MAC_SIZE);
+          set_type(VhsmMacMessage::END);
   
   return send_message_raw_data_response(message, response, mac_ptr, mac_size);
 }
