@@ -49,7 +49,7 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
   }
   
   if (response_sz > serialized_sz) {
-    delete buf;
+    delete [] buf;
     buf = new char[response_sz];
   }
   
@@ -60,7 +60,7 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
   result = response.ParseFromArray(buf, response_sz);
   
   cleanup:
-  delete buf;
+  delete [] buf;
   
   return result;
 }

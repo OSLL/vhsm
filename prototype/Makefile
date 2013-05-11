@@ -1,3 +1,5 @@
+all: build_client build_vhsm build_host
+
 build_client: build_protocol
 	$(MAKE) -C client
 
@@ -6,6 +8,9 @@ build_vhsm: build_protocol
 
 build_protocol:
 	$(MAKE) -C protocol
+
+build_host:
+	$(MAKE) -C host
 
 clean:
 	$(MAKE) -C client clean
