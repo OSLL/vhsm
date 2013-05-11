@@ -73,7 +73,7 @@ int main(int argc, char ** argv) {
       !vhsm_receiver.open(VHSM_IO_IN) ||
       !container_sender.open(CONTAINER_IO_OUT) ||
       !container_receiver.open(CONTAINER_IO_IN)) {
-    std::cerr << "failed to open one or more file for transport." << std::cerr;
+    std::cerr << "failed to open one or more file for transport." << std::endl;
     return 1;
   }
   
