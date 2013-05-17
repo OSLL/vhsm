@@ -8,6 +8,11 @@ message VhsmKeyId {
   required bytes id = 1;
 }
 
+//messge type for all key data
+message VhsmKey {
+  required bytes key = 1;
+}
+
 //message type for all raw data message parts.
 message VhsmRawData {
   required bytes data = 1;
@@ -25,6 +30,8 @@ enum ErrorCode {
   ERR_MAC_INIT = 8;
   ERR_MAC_NOT_INITIALIZED = 9;
   ERR_VHSM_ERROR = 10;
+  ERR_BAD_CREDENTIALS = 11;
+  ERR_KEY_ID_OCCUPIED = 12;
 }
 
 
@@ -75,6 +82,7 @@ enum VhsmMessageClass {
   SESSION = 1;
   DIGEST = 2;
   MAC = 3;
+  KEY_MGMT = 4;
 }
 
 
@@ -83,9 +91,18 @@ message VhsmSessionMessage {
   enum MessageType {
     START = 1;
     END = 2;
+    LOGIN = 3;
+    LOGOUT = 4;
+  }
+  
+  message Login {
+    required string username = 1;
+    required string password = 2;
   }
   
   required MessageType type = 1;
+  
+  optional Login login_message = 2;
 }
 
 //Corresponds to VhsmDigestMessage::DIGEST
@@ -141,6 +158,35 @@ message VhsmMacMessage {
   optional Update update_message = 3;
 }
 
+//Corresponds to VhsmMessageClass::KEY_MGMT
+message VhsmKeyMgmtMessage {
+  enum MessageType {
+    GET_KEY_IDS_COUNT = 1;
+    GET_KEY_IDS = 2;
+    DELETE_KEY = 3;
+    CREATE_KEY = 4;
+  }
+  
+  message DeleteKey {
+    required VhsmKeyId key_id = 1;
+  }
+  
+  message CreateKey {
+    required VhsmKeyId key_id = 1;
+    required VhsmKey key = 2;
+  }
+  
+  required MessageType type = 1;
+  
+  optional DeleteKey delete_key_message = 2;
+  optional CreateKey create_key_message = 3;
+}
+
+//is used as a response to VhsmKeyMgmtMessage::MessageType::GET_KEY_IDS message
+message KeyIdList {
+  repeated VhsmKeyId ids = 1;
+}
+
 //main vhsm message class - all messages to vhsm should be sent using this message type
 //message contents depends on message_class property's value
 message VhsmMessage {
@@ -149,8 +195,8 @@ message VhsmMessage {
   optional VhsmSessionMessage session_message = 2;
   optional VhsmDigestMessage digest_message = 3;
   optional VhsmMacMessage mac_message = 4;
+  optional VhsmKeyMgmtMessage key_mgmt_message = 5;
 }
-
 
 //main vhsm response class - all responses from vhsm should be passed using this message type
 message VhsmResponse {
@@ -161,6 +207,7 @@ message VhsmResponse {
     RAW_DATA = 3;
     UNSIGNED_INT = 4;
     SESSION = 5;
+    KEY_ID_LIST = 6;
   }
   
   required ResponseType type = 1;
@@ -170,4 +217,6 @@ message VhsmResponse {
   optional VhsmRawData raw_data = 3;
   optional uint32 unsigned_int = 4;
   optional VhsmSession session = 5;
+  
+  optional KeyIdList key_ids = 6;
 }
