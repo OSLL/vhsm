@@ -11,10 +11,6 @@ struct ClientId {
     int64_t id;
 };
 
-
-// extracts private key for the given ClientId
-const char* getClientPrivateKey(const ClientId &id);
-
 VhsmResponse handleMessage(VhsmMessage &m, ClientId &id);
 
 #endif // VHSM_H
