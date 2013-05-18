@@ -37,7 +37,7 @@ vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, uns
 // MAC functions
 //
 
-vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session);
+vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session, vhsm_key_id key_id);
 
 vhsm_rv vhsm_tr_mac_update(vhsm_session session, unsigned char const * data_chunk, unsigned int chunk_size);
 

@@ -8,14 +8,14 @@ int is_valid_digest_method(vhsm_digest_method method);
 
 
 
-static vhsm_rv vhsm_mac_init_hmac(vhsm_session session, vhsm_digest_method const * digest_method_ptr) {
+static vhsm_rv vhsm_mac_init_hmac(vhsm_session session, vhsm_digest_method const * digest_method_ptr, vhsm_key_id key_id) {
   if (0 == digest_method_ptr || !is_valid_digest_method(*digest_method_ptr)) {
     return VHSM_RV_BAD_MAC_METHOD;
   }
   
   switch (digest_method_ptr->digest_method) {
   case VHSM_DIGEST_SHA1 : {
-    return vhsm_tr_mac_init_hmac_sha1(session);
+    return vhsm_tr_mac_init_hmac_sha1(session, key_id);
   }
   default : {
     return VHSM_RV_BAD_MAC_METHOD;
@@ -30,7 +30,7 @@ static vhsm_rv vhsm_mac_init_hmac(vhsm_session session, vhsm_digest_method const
 vhsm_rv vhsm_mac_init(vhsm_session session, vhsm_mac_method method) {
   switch (method.mac_method) {
   case VHSM_MAC_HMAC : {
-    return vhsm_mac_init_hmac(session, (vhsm_digest_method const *) method.method_params);
+    return vhsm_mac_init_hmac(session, (vhsm_digest_method const *) method.method_params, method.key_id);
   }
   default : {
     return VHSM_RV_BAD_MAC_METHOD;

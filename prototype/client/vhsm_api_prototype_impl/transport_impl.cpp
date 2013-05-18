@@ -341,7 +341,7 @@ static VhsmMessage create_mac_message(VhsmMacMessage_MessageType type, vhsm_sess
   return message;
 }
 
-vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
+vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session, vhsm_key_id key_id) {
   VhsmMessage message = create_mac_message(VhsmMacMessage::INIT, session);
   VhsmResponse response;
   
@@ -355,6 +355,12 @@ vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
           mutable_hmac_parameters()->
           mutable_digest_mechanism()->
           set_mid(SHA1);
+  message.mutable_mac_message()->
+          mutable_init_message()->
+          mutable_mechanism()->
+          mutable_hmac_parameters()->
+          mutable_key_id()->
+          set_id((void const *) key_id.id, sizeof(key_id.id));
   
   return send_message_ok_response(message, response);
 }

@@ -67,6 +67,8 @@ message VhsmMacMechanism {
   //parameters message for VhsmMacMechanismId::HMAC type.
   message HmacParameters {
     required VhsmDigestMechanism digest_mechanism = 1;
+    
+    required VhsmKeyId key_id = 2;
   }
   
   required VhsmMacMechanismId mid = 1;
