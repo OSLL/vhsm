@@ -86,6 +86,7 @@ static vhsm_rv convert_error_code(ErrorCode error) {
     case ERR_MAC_NOT_INITIALIZED : return VHSM_RV_MAC_NOT_INITIALIZED;
     case ERR_BAD_CREDENTIALS : return VHSM_RV_BAD_CREDENTIALS;
     case ERR_KEY_ID_OCCUPIED : return VHSM_RV_KEY_ID_OCCUPIED;
+    case ERR_NOT_AUTHORIZED : return VHSM_RV_NOT_AUTHORIZED;
     default : return VHSM_RV_ERR;
   }
 }
