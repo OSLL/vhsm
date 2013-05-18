@@ -43,6 +43,8 @@ typedef int vhsm_rv;
 
 // key with passed key_id was not found
 #define VHSM_RV_KEY_NOT_FOUND 0x00000008
+// key with passsed key_id is already occupied (on attempt to create a key with passed id)
+#define VHSM_RV_KEY_ID_OCCUPIED 0x0000000E
 
 //illegal mac method passed to a function
 #define VHSM_RV_BAD_MAC_METHOD 0x0000000D
@@ -61,10 +63,10 @@ typedef struct {
   long sid;
 } vhsm_session;
 
-// credentials info type (stub)
+// credentials
 typedef struct {
-  // it is not clear yet what kind of credentials should be used - using a stub.
-  char __dummy__;
+  char username[64];
+  char password[64];
 } vhsm_credentials;
 
 // Start a new session. Session structure pointed to by session_ptr is initialized if this call succeeds.

@@ -12,6 +12,7 @@ openssl_engine:
 	$(MAKE) -C openssl_vhsm_engine
 
 clean:
+	$(MAKE) -C vhsm_api_prototype clean
 	$(MAKE) -C vhsm_api_prototype_impl clean
 	$(MAKE) -C openssl_vhsm_engine clean
 	$(MAKE) -C test_app clean
