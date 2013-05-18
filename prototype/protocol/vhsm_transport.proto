@@ -192,6 +192,8 @@ message KeyIdList {
 message VhsmMessage {
   required VhsmMessageClass message_class = 1;
   
+  required VhsmSession session = 6;
+  
   optional VhsmSessionMessage session_message = 2;
   optional VhsmDigestMessage digest_message = 3;
   optional VhsmMacMessage mac_message = 4;
