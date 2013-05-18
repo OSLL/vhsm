@@ -9,7 +9,7 @@ namespace ES {
   
   class Namespace {
   public:
-    virtual std::string get_name() const = 0;
+    virtual std::string const & get_name() const = 0;
     
     virtual std::vector<std::string> list_object_names() const = 0;
     virtual bool contains_object(std::string const & name) const = 0;
