@@ -10,4 +10,6 @@ msg_handler: MessageHandler.cpp
 	$(CC) -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
 
 clean:
+	$(MAKE) -C esapi clean
+	$(MAKE) -C esapi_file_impl clean
 	rm -f *.o *~ *.out vhsm

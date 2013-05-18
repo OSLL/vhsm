@@ -12,14 +12,14 @@
 typedef CryptoPP::HMAC<CryptoPP::SHA1> HMAC_SHA1_CTX;
 typedef CryptoPP::SHA1 SHA1_CTX;
 
-typedef ES::EncryptedStorage::Key KeyType;
+typedef ES::Key KeyType;
 
 typedef std::map<ClientId, std::set<VhsmSession> > ClSsMap;
 typedef std::map<VhsmSession, ClientId> SsClMap;
 typedef std::map<VhsmSession, std::string> UserMap;
 typedef std::map<VhsmSession, HMAC_SHA1_CTX*> HMACContextMap;
 typedef std::map<VhsmSession, SHA1_CTX*> SHA1ContextMap;
-typedef std::map<std::string, ES::EncryptedStorage::Key> KeyMap;
+typedef std::map<std::string, KeyType> KeyMap;
 
 static ClSsMap clientSessions;
 static UserMap clientNames;
@@ -51,7 +51,7 @@ static std::string userNameForSession(const VhsmSession &s) {
 static KeyType keyForUser(const std::string &u) {
     KeyMap::iterator it = clientKeys.find(u);
     if(it != clientKeys.end()) return it->second;
-    return ES::EncryptedStorage::Key();
+    return KeyType();
 }
 
 static bool hasLoggedIn(const VhsmSession &s) {

@@ -9,8 +9,6 @@ namespace ES {
 
   class EncryptedStorage {
   public:
-    typedef std::vector<unsigned char> Key;
-  public:
     virtual std::vector<std::string> list_namespaces() const = 0;
     virtual bool namespace_exists(std::string const & ns) const = 0;
     virtual bool namespace_accessible(std::string const & ns, Key const & key) const = 0;

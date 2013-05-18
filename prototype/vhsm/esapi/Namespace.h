@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "Types.h"
 #include "SecretObject.h"
 
 namespace ES {
