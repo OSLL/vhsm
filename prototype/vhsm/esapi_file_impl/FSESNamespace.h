@@ -1,9 +1,16 @@
+#pragma once
+
 #include <Namespace.h>
+#include <EncryptedStorage.h>
 
 namespace ES {
   
   class FSESNamespace : public Namespace {
   public:
+    FSESNamespace(std::string const & nsroot, Key const & key) {
+      //TODO implement me;
+    }
+    
     virtual std::string const & get_name() const {
       //TODO implement me;
       return "not implemented";

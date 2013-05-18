@@ -35,6 +35,16 @@ namespace ES {
       return path;
     }
     
+    static std::vector<std::string> list_directories(std::string const & path) {
+      //TODO implement me;
+      return std::vector<std::string>();
+    }
+    
+    static std::vector<std::string> list_files(std::string const & path) {
+      //TODO implement me;
+      return std::vector<std::string>();
+    }
+    
   private:
     static bool read_stat(std::string const & path, struct stat * s) {
       return 0 == stat(path.c_str(), s);

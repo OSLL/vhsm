@@ -7,8 +7,6 @@ namespace ES {
   
   class FSEncryptedStorage : public EncryptedStorage {
   public:
-    using EncryptedStorage::Key;
-  public:
     FSEncryptedStorage(std::string const & root) : my_root(FsUtil::to_dir_name(root)) {
       //TODO implement me;
     }
@@ -40,7 +38,7 @@ namespace ES {
     
     virtual Namespace & load_namespace(std::string const & ns, Key const & key) {
       //TODO
-      return (Namespace &)*(new FSESNamespace());
+      return *(new FSESNamespace(ns, key));
     }
     
     virtual void unload_namespace(Namespace & ns) {
