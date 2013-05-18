@@ -1,7 +1,7 @@
 all: test_engine
 
 test_engine: main.c
-	gcc -std=c99 -ggdb3 -c -I.. -fPIC main.c
-	gcc -ggdb3 -shared -fPIC -o test_engine.so main.o -L/home/user/openssl_build_2/lib -lcrypto -lssl -ldl
+	g++ -c -ggdb3 -I.. -fPIC main.c
+	g++ -shared -ggdb3 -fPIC main.o ../vhsm_api_prototype_impl/common_impl.o ../vhsm_api_prototype_impl/digest_impl.o ../vhsm_api_prototype_impl/mac_impl.o ../vhsm_api_prototype_impl/transport_impl.o ../../protocol/vhsm_transport.pb.o  -o test_engine.so -lprotobuf -lcrypto -lssl -ldl
 clean:
 	rm -f *.o *.so

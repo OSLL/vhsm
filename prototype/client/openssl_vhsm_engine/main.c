@@ -4,8 +4,8 @@
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 #include <openssl/hmac.h>
-#include <vhsm_api_prototype/common.h>
-#include <vhsm_api_prototype/mac.h>
+#include "../vhsm_api_prototype/common.h"
+#include "../vhsm_api_prototype/mac.h"
 
 #define TEST_ENGINE_ID "test_engine"
 #define TEST_ENGINE_NAME "Test Engine"
@@ -100,7 +100,7 @@ static int update_remote_ctx(vhsm_key_id *key_id, int phase, const void *data, s
         return 1;
     case UPDATE_HASH:
         if(remote_ctx.skip_update) return 1;
-        return vhsm_mac_update(te_vhsm_session, data, count) == VHSM_RV_OK;
+        return vhsm_mac_update(te_vhsm_session, (const unsigned char*)data, count) == VHSM_RV_OK;
 //        return HMAC_Update(&remote_ctx.hctx, data, count);
     }
     return 0;
@@ -127,7 +127,7 @@ static int final_remote_ctx(int phase, unsigned char *md) {
 //Internal SHA1 implementation
 
 int te_digest_init(EVP_MD_CTX *ctx) {
-    struct te_hmac_sha1_digest_ctx *c = ctx->md_data;
+    struct te_hmac_sha1_digest_ctx *c = (struct te_hmac_sha1_digest_ctx *)ctx->md_data;
     c->key_set = 0;
     c->final = 0;
     init_remote_ctx();
@@ -135,7 +135,7 @@ int te_digest_init(EVP_MD_CTX *ctx) {
 }
 
 int te_digest_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
-    struct te_hmac_sha1_digest_ctx *c = ctx->md_data;
+    struct te_hmac_sha1_digest_ctx *c = (struct te_hmac_sha1_digest_ctx *)ctx->md_data;
     if(c->key_set == 0) {
         if(count < MAX_KEY_LENGTH) {
             printf("Something went wrong\n");
@@ -157,7 +157,7 @@ int te_digest_update(EVP_MD_CTX *ctx, const void *data, size_t count) {
 }
 
 int te_digest_final(EVP_MD_CTX *ctx, unsigned char *md) {
-    struct te_hmac_sha1_digest_ctx *c = ctx->md_data;
+    struct te_hmac_sha1_digest_ctx *c = (struct te_hmac_sha1_digest_ctx *)ctx->md_data;
     if(!c->key_set) return 0;
     if(!c->final) return final_remote_ctx(FINAL_START, md);
     else return final_remote_ctx(FINAL_END, md);
@@ -172,7 +172,7 @@ int te_digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from) {
 
 int te_digest_cleanup(EVP_MD_CTX *ctx) {
     if (ctx->md_data) {
-        struct te_hmac_sha1_digest_ctx *c = ctx->md_data;
+        struct te_hmac_sha1_digest_ctx *c = (struct te_hmac_sha1_digest_ctx *)ctx->md_data;
         memset(ctx->md_data, 0, sizeof(struct te_hmac_sha1_digest_ctx));
     }
     return 1;
@@ -263,5 +263,33 @@ static int bind_fn(ENGINE * e, const char *id) {
     return 1;
 }
 
-IMPLEMENT_DYNAMIC_CHECK_FN()
-IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+//IMPLEMENT_DYNAMIC_CHECK_FN()
+//IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
+
+extern "C" {
+	int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
+	unsigned long v_check(unsigned long v);
+}
+
+unsigned long v_check(unsigned long v) {
+	if(v >= OSSL_DYNAMIC_OLDEST) return OSSL_DYNAMIC_VERSION;
+	return 0;
+}
+
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) {
+	if(ENGINE_get_static_state() == fns->static_state) goto skip_cbs;
+	if(!CRYPTO_set_mem_functions(fns->mem_fns.malloc_cb,
+		fns->mem_fns.realloc_cb, fns->mem_fns.free_cb))
+		return 0;
+	CRYPTO_set_locking_callback(fns->lock_fns.lock_locking_cb);
+	CRYPTO_set_add_lock_callback(fns->lock_fns.lock_add_lock_cb);
+	CRYPTO_set_dynlock_create_callback(fns->lock_fns.dynlock_create_cb);
+	CRYPTO_set_dynlock_lock_callback(fns->lock_fns.dynlock_lock_cb);
+	CRYPTO_set_dynlock_destroy_callback(fns->lock_fns.dynlock_destroy_cb);
+	if(!CRYPTO_set_ex_data_implementation(fns->ex_data_fns))
+		return 0;
+	if(!ERR_set_implementation(fns->err_fns)) return 0;
+	skip_cbs:
+	if(!bind_fn(e,id)) return 0;
+	return 1;
+}
