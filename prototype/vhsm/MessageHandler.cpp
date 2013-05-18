@@ -7,16 +7,14 @@
 #include <crypto++/modes.h>
 #include <crypto++/files.h>
 #include <map>
-#include <cstdio>
-
-#define KEY_STORAGE_PATH "./"
+#include <set>
 
 typedef CryptoPP::HMAC<CryptoPP::SHA1> HMAC_SHA1_CTX;
 typedef CryptoPP::SHA1 SHA1_CTX;
 
 typedef ES::EncryptedStorage::Key KeyType;
 
-typedef std::map<ClientId, VhsmSession> ClSsMap;
+typedef std::map<ClientId, std::set<VhsmSession> > ClSsMap;
 typedef std::map<VhsmSession, ClientId> SsClMap;
 typedef std::map<VhsmSession, std::string> UserMap;
 typedef std::map<VhsmSession, HMAC_SHA1_CTX*> HMACContextMap;
@@ -87,10 +85,6 @@ static inline void rawResponse(VhsmResponse &r, const char *data, unsigned int l
 
 //------------------------------------------------------------------------------
 
-static inline std::string getUserStorage(const std::string &username) {
-    return std::string(KEY_STORAGE_PATH) + username + "/";
-}
-
 static ES::EncryptedStorage *getStorage() {
     return 0;
 }
@@ -111,7 +105,6 @@ bool authClient(const VhsmSessionMessage_Login &m, KeyType &key) {
     key = convertKey(keyHash, 32);
 
     return getStorage()->namespace_accessible(m.username(), key);
-
 }
 
 //------------------------------------------------------------------------------
@@ -119,19 +112,24 @@ bool authClient(const VhsmSessionMessage_Login &m, KeyType &key) {
 static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const ClientId &id, const VhsmSession &uss) {
     VhsmResponse r;
     switch(m.type()) {
-    case VhsmSessionMessage::START:
-        if(clientSessions.find(id) != clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
-        else {
-            int64_t sid = getNextSessionId();
-            VhsmSession s;
-            s.set_sid(sid);
-            clientSessions.insert(std::make_pair(id, s));
-            r.set_type(VhsmResponse::SESSION);
-            r.mutable_session()->set_sid(sid);
+    case VhsmSessionMessage::START: {
+        int64_t sid = getNextSessionId();
+        VhsmSession s;
+        s.set_sid(sid);
+        ClSsMap::iterator cs = clientSessions.find(id);
+        if(cs == clientSessions.end()) {
+            std::set<VhsmSession> ss; ss.insert(s);
+            clientSessions.insert(std::make_pair(id, ss));
+        } else {
+            cs->second.insert(s);
         }
+        r.set_type(VhsmResponse::SESSION);
+        r.mutable_session()->set_sid(sid);
         break;
-    case VhsmSessionMessage::END:
-        if(clientSessions.find(id) == clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
+    }
+    case VhsmSessionMessage::END: {
+        ClSsMap::iterator cs = clientSessions.find(id);
+        if(cs == clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
         else {
             HMACContextMap::iterator hi = clientContexts.find(uss);
             if(hi != clientContexts.end()) {
@@ -147,10 +145,12 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
             KeyMap::iterator ki = clientKeys.find(userNameForSession(uss));
             if(ki != clientKeys.end()) clientKeys.erase(ki);
 
-            if(clientSessions.erase(id) != 1) errorResponse(r, ERR_VHSM_ERROR);
-            else okResponse(r);
+            if(cs->second.size() == 1) clientSessions.erase(id);
+            else cs->second.erase(uss);
+            okResponse(r);
         }
         break;
+    }
     case VhsmSessionMessage::LOGIN:
         if(m.has_login_message()) {
             KeyType key;
