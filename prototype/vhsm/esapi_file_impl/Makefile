@@ -2,10 +2,13 @@ CC = g++ -I../esapi
 LIBS = -lcryptopp
 AR = ar crf
 
-OBJECTS = FSEncryptedStorage.o ESCypher.o
+OBJECTS = FSESNamespace.o ESCypher.o FSEncryptedStorage.o
 
-all: storage cypher
+all: storage cypher namespace
 	$(AR) esapi.a $(OBJECTS)
+
+namespace: FSESNamespace.cpp
+	$(CC) -c FSESNamespace.cpp -o FSESNamespace.o $(LIBS)
 
 storage: cypher FSEncryptedStorage.cpp
 	$(CC) -c FSEncryptedStorage.cpp -o FSEncryptedStorage.o $(LIBS)

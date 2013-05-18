@@ -1,15 +1,18 @@
-CC = g++ -I../files_transport -I../protocol
+CC = g++ -I../files_transport -I../protocol -I./esapi
 LIBS = -lprotobuf -lcryptopp
 
-OBJECTS = MessageHandler.o ../protocol/vhsm_transport.pb.o esapi_file_impl/esapi.a
+OBJECTS = EncryptedStorageFactory.o MessageHandler.o ../protocol/vhsm_transport.pb.o ./esapi_file_impl/esapi.a
 
 all: vhsm
 
-vhsm: msg_handler esapi_impl
+vhsm: msg_handler esapi_impl esfactory
 	$(CC) vhsm.cpp $(OBJECTS) -o vhsm $(LIBS)
 
 msg_handler: MessageHandler.cpp
 	$(CC) -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
+
+esfactory: EncryptedStorageFactory.cpp
+	$(CC) -c EncryptedStorageFactory.cpp -o EncryptedStorageFactory.o $(LIBS)
 
 esapi_impl:
 	$(MAKE) -C esapi_file_impl

@@ -5,6 +5,7 @@
 #include "FSESNamespace.h"
 #include "FsUtil.h"
 
+
 namespace ES {
   
   FSEncryptedStorage::FSEncryptedStorage(std::string const & root, bool init) : my_root(root) {

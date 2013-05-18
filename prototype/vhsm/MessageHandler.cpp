@@ -1,5 +1,5 @@
 #include "vhsm.h"
-#include "esapi/EncryptedStorage.h"
+#include "EncryptedStorageFactory.h"
 #include <crypto++/hmac.h>
 #include <crypto++/sha.h>
 #include <crypto++/hex.h>
@@ -85,8 +85,14 @@ static inline void rawResponse(VhsmResponse &r, const char *data, unsigned int l
 
 //------------------------------------------------------------------------------
 
+static ES::EncryptedStorage * encrypted_storage = 0;
+
 static ES::EncryptedStorage *getStorage() {
-    return 0;
+    if (0 == encrypted_storage) {
+      encrypted_storage = EncryptedStorageFactory().create_storage();
+    }
+    
+    return encrypted_storage;
 }
 
 static KeyType convertKey(byte *k, size_t ln) {
