@@ -84,6 +84,8 @@ static vhsm_rv convert_error_code(ErrorCode error) {
     case ERR_BAD_MAC_METHOD : return VHSM_RV_BAD_MAC_METHOD;
     case ERR_MAC_INIT : return VHSM_RV_MAC_INIT_ERR;
     case ERR_MAC_NOT_INITIALIZED : return VHSM_RV_MAC_NOT_INITIALIZED;
+    case ERR_BAD_CREDENTIALS : return VHSM_RV_BAD_CREDENTIALS;
+    case ERR_KEY_ID_OCCUPIED : return VHSM_RV_KEY_ID_OCCUPIED;
     default : return VHSM_RV_ERR;
   }
 }
@@ -195,13 +197,24 @@ vhsm_rv vhsm_tr_end_session(vhsm_session session) {
 }
 
 vhsm_rv vhsm_tr_login(vhsm_session session, vhsm_credentials credentials) {
-  //TODO implement it when authorization mechanisms are introduced
-  return VHSM_RV_OK;
+  VhsmMessage message = create_session_message(VhsmSessionMessage::LOGIN, session);
+  VhsmResponse response;
+  
+  message.mutable_session_message()->
+          mutable_login_message()->
+          set_username(credentials.username);
+  message.mutable_session_message()->
+          mutable_login_message()->
+          set_password(credentials.password);
+  
+  return send_message_ok_response(message, response);
 }
 
 vhsm_rv vhsm_tr_logout(vhsm_session session) {
-  //TODO implement it when authorization mechanisms are introduced
-  return VHSM_RV_OK;
+  VhsmMessage message = create_session_message(VhsmSessionMessage::LOGOUT, session);
+  VhsmResponse response;
+  
+  return send_message_ok_response(message, response);
 }
 
 
