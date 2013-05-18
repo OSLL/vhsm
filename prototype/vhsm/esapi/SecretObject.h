@@ -27,7 +27,7 @@ namespace ES {
       }
       
       ~SODataHolder() {
-          delete [] my_bytes;
+          delete [] (char *)my_bytes;
       }
     };
   public:
