@@ -1,19 +1,38 @@
 #include "vhsm.h"
+#include "esapi/EncryptedStorage.h"
 #include <crypto++/hmac.h>
 #include <crypto++/sha.h>
+#include <crypto++/hex.h>
+#include <crypto++/aes.h>
+#include <crypto++/modes.h>
+#include <crypto++/files.h>
 #include <map>
+#include <cstdio>
+
+#define KEY_STORAGE_PATH "./"
 
 typedef CryptoPP::HMAC<CryptoPP::SHA1> HMAC_SHA1_CTX;
 typedef CryptoPP::SHA1 SHA1_CTX;
 
-typedef std::map<ClientId, HMAC_SHA1_CTX*> HMACContextMap;
-typedef std::map<ClientId, SHA1_CTX*> SHA1ContextMap;
-typedef std::map<ClientId, VhsmSession> SessionMap;
+typedef ES::EncryptedStorage::Key KeyType;
 
-static SessionMap clientSessions;
+typedef std::map<ClientId, VhsmSession> ClSsMap;
+typedef std::map<VhsmSession, ClientId> SsClMap;
+typedef std::map<VhsmSession, std::string> UserMap;
+typedef std::map<VhsmSession, HMAC_SHA1_CTX*> HMACContextMap;
+typedef std::map<VhsmSession, SHA1_CTX*> SHA1ContextMap;
+typedef std::map<std::string, ES::EncryptedStorage::Key> KeyMap;
+
+static ClSsMap clientSessions;
+static UserMap clientNames;
 static HMACContextMap clientContexts;
 static SHA1ContextMap clientDigests;
+static KeyMap clientKeys;
 static int64_t sessionCounter = 0;
+
+static bool operator<(const VhsmSession &s1, const VhsmSession &s2) {
+    return s1.sid() < s2.sid();
+}
 
 //------------------------------------------------------------------------------
 
@@ -23,6 +42,26 @@ static int64_t getNextSessionId() {
 
 static bool hasOpenSession(const ClientId &id) {
     return clientSessions.find(id) != clientSessions.end();
+}
+
+static std::string userNameForSession(const VhsmSession &s) {
+    UserMap::iterator it = clientNames.find(s);
+    if(it != clientNames.end()) return it->second;
+    return std::string();
+}
+
+static KeyType keyForUser(const std::string &u) {
+    KeyMap::iterator it = clientKeys.find(u);
+    if(it != clientKeys.end()) return it->second;
+    return ES::EncryptedStorage::Key();
+}
+
+static bool hasLoggedIn(const VhsmSession &s) {
+    return clientKeys.find(userNameForSession(s)) != clientKeys.end();
+}
+
+static bool hasLoggedIn(const std::string &u) {
+    return clientKeys.find(u) != clientKeys.end();
 }
 
 //------------------------------------------------------------------------------
@@ -48,14 +87,36 @@ static inline void rawResponse(VhsmResponse &r, const char *data, unsigned int l
 
 //------------------------------------------------------------------------------
 
-const char* getClientPrivateKey(const ClientId &id) {
-    //some code here for key extraction
-    return "secret_key";
+static inline std::string getUserStorage(const std::string &username) {
+    return std::string(KEY_STORAGE_PATH) + username + "/";
+}
+
+static ES::EncryptedStorage *getStorage() {
+    return 0;
+}
+
+static KeyType convertKey(byte *k, size_t ln) {
+    KeyType key(ln);
+    for(size_t i = 0; i < ln; ++i) key[i] = k[i];
+    return key;
 }
 
 //------------------------------------------------------------------------------
 
-static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const ClientId &id) {
+bool authClient(const VhsmSessionMessage_Login &m, KeyType &key) {
+    CryptoPP::SHA256 keyHashCtx;
+    byte keyHash[32];
+    keyHashCtx.Update((byte*)m.password().c_str(), m.password().size());
+    keyHashCtx.Final(keyHash);
+    key = convertKey(keyHash, 32);
+
+    return getStorage()->namespace_accessible(m.username(), key);
+
+}
+
+//------------------------------------------------------------------------------
+
+static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const ClientId &id, const VhsmSession &uss) {
     VhsmResponse r;
     switch(m.type()) {
     case VhsmSessionMessage::START:
@@ -72,21 +133,41 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
     case VhsmSessionMessage::END:
         if(clientSessions.find(id) == clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
         else {
-            HMACContextMap::iterator hi = clientContexts.find(id);
+            HMACContextMap::iterator hi = clientContexts.find(uss);
             if(hi != clientContexts.end()) {
                 delete hi->second;
                 clientContexts.erase(hi);
             }
-            SHA1ContextMap::iterator di = clientDigests.find(id);
+            SHA1ContextMap::iterator di = clientDigests.find(uss);
             if(di != clientDigests.end()) {
                 delete di->second;
                 clientDigests.erase(di);
             }
 
+            KeyMap::iterator ki = clientKeys.find(userNameForSession(uss));
+            if(ki != clientKeys.end()) clientKeys.erase(ki);
+
             if(clientSessions.erase(id) != 1) errorResponse(r, ERR_VHSM_ERROR);
             else okResponse(r);
         }
         break;
+    case VhsmSessionMessage::LOGIN:
+        if(m.has_login_message()) {
+            KeyType key;
+            if(authClient(m.login_message(), key)) {
+                clientKeys.insert(std::make_pair(m.login_message().username(), key));
+                okResponse(r);
+            } else errorResponse(r, ERR_BAD_CREDENTIALS);
+        } else errorResponse(r, ERR_BAD_CREDENTIALS);
+        break;
+    case VhsmSessionMessage::LOGOUT: {
+        KeyMap::iterator it = clientKeys.find(userNameForSession(uss));
+        if(it != clientKeys.end()) {
+            clientKeys.erase(it);
+            okResponse(r);
+        } else errorResponse(r, ERR_BAD_CREDENTIALS);
+        break;
+    }
     default:
         errorResponse(r, ERR_VHSM_ERROR);
     }
@@ -94,10 +175,17 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
     return r;
 }
 
-static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id) {
-    VhsmResponse r;
-    HMACContextMap::iterator i = clientContexts.find(id);
+//----------------------------------------------------------------------------------------
 
+static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id, const VhsmSession &uss) {
+    VhsmResponse r;
+    std::string username = userNameForSession(uss);
+    if(username.empty() || !hasLoggedIn(username)) {
+        errorResponse(r, ERR_NOT_AUTHORIZED);
+        return r;
+    }
+
+    HMACContextMap::iterator i = clientContexts.find(uss);
     switch(m.type()) {
     case VhsmMacMessage::INIT: {
         const VhsmMacMessage_Init &msg = m.init_message();
@@ -106,12 +194,16 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
                 || !msg.mechanism().hmac_parameters().digest_mechanism().mid() != SHA1) {
             errorResponse(r, ERR_BAD_MAC_METHOD);
         } else {
-            const char *pkey = getClientPrivateKey(id);
-            if(pkey != 0) {
-                HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((const byte*)pkey, strlen(pkey));
-                if(!clientContexts.insert(std::make_pair(id, hctx)).second) errorResponse(r, ERR_MAC_INIT);
+            try {
+                ES::SecretObject pkey = getStorage()->load_namespace(username, keyForUser(username))
+                        .load_object(msg.mechanism().hmac_parameters().key_id().id());
+
+                HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((byte*)pkey.raw_bytes(), pkey.size());
+                if(!clientContexts.insert(std::make_pair(uss, hctx)).second) errorResponse(r, ERR_MAC_INIT);
                 else okResponse(r);
-            } else errorResponse(r, ERR_KEY_NOT_FOUND);
+            } catch (...) {
+                errorResponse(r, ERR_KEY_NOT_FOUND);
+            }
         }
         break;
     }
@@ -145,6 +237,7 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
                 delete ctx;
                 clientContexts.erase(i);
             } catch(...) {
+                // memory leak?
                 errorResponse(r, ERR_VHSM_ERROR);
                 return r;
             }
@@ -157,16 +250,22 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
     return r;
 }
 
-static VhsmResponse handleDigestMessage(const VhsmDigestMessage &m, const ClientId &id) {
-    VhsmResponse r;
-    SHA1ContextMap::iterator i = clientDigests.find(id);
+//----------------------------------------------------------------------------------------
 
+static VhsmResponse handleDigestMessage(const VhsmDigestMessage &m, const ClientId &id, const VhsmSession &uss) {
+    VhsmResponse r;
+    if(!hasLoggedIn(uss)) {
+        errorResponse(r, ERR_NOT_AUTHORIZED);
+        return r;
+    }
+
+    SHA1ContextMap::iterator i = clientDigests.find(uss);
     switch(m.type()) {
     case VhsmDigestMessage::INIT:
         switch(m.init_message().mechanism().mid()) {
         case SHA1: {
             SHA1_CTX *ctx = new SHA1_CTX();
-            if(clientDigests.insert(std::make_pair(id, ctx)).second) okResponse(r);
+            if(clientDigests.insert(std::make_pair(uss, ctx)).second) okResponse(r);
             else errorResponse(r, ERR_DIGEST_INIT);
             break;
         }
@@ -215,17 +314,68 @@ static VhsmResponse handleDigestMessage(const VhsmDigestMessage &m, const Client
     return r;
 }
 
+//----------------------------------------------------------------------------------------
+
+static VhsmResponse handleKeyMgmtMessage(const VhsmKeyMgmtMessage &m, const ClientId &id, const VhsmSession &uss) {
+    VhsmResponse r;
+
+    std::string username = userNameForSession(uss);
+    if(username.empty() || !hasLoggedIn(username)) {
+        errorResponse(r, ERR_NOT_AUTHORIZED);
+        return r;
+    }
+    KeyType userkey = keyForUser(username);
+
+    try{
+        ES::Namespace &uns = getStorage()->load_namespace(username, userkey);
+        switch(m.type()) {
+        case VhsmKeyMgmtMessage::CREATE_KEY:
+            if(uns.store_object(m.create_key_message().key_id().id(),
+                             m.create_key_message().key().key().data(),
+                             m.create_key_message().key().key().size())) {
+                okResponse(r);
+            } else errorResponse(r, ERR_KEY_ID_OCCUPIED);
+            break;
+        case VhsmKeyMgmtMessage::DELETE_KEY:
+            if(uns.delete_object(m.delete_key_message().key_id().id())) okResponse(r);
+            else errorResponse(r, ERR_KEY_NOT_FOUND);
+            break;
+        case VhsmKeyMgmtMessage::GET_KEY_IDS: {
+            std::vector<std::string> ids = uns.list_object_names();
+            r.set_type(VhsmResponse::KEY_ID_LIST);
+            for(std::vector<std::string>::iterator i = ids.begin(); i != ids.end(); ++i) {
+                r.mutable_key_ids()->add_ids()->set_id(*i);
+            }
+            break;
+        }
+        case VhsmKeyMgmtMessage::GET_KEY_IDS_COUNT:
+            uintResponse(r, uns.list_object_names().size());
+            break;
+        }
+    } catch (...) {
+        errorResponse(r, ERR_VHSM_ERROR);
+    }
+
+    return r;
+}
+
+//----------------------------------------------------------------------------------------
+
 VhsmResponse handleMessage(VhsmMessage &m, ClientId &id) {
     VhsmResponse r;
     switch(m.message_class()) {
     case SESSION:
-        return handleSessionMessage(m.session_message(), id);
+        return handleSessionMessage(m.session_message(), id, m.session());
     case MAC:
-        if(hasOpenSession(id)) return handleMacMessage(m.mac_message(), id);
+        if(hasOpenSession(id)) return handleMacMessage(m.mac_message(), id, m.session());
         errorResponse(r, ERR_BAD_SESSION);
         break;
     case DIGEST:
-        if(hasOpenSession(id)) return handleDigestMessage(m.digest_message(), id);
+        if(hasOpenSession(id)) return handleDigestMessage(m.digest_message(), id, m.session());
+        errorResponse(r, ERR_BAD_SESSION);
+        break;
+    case KEY_MGMT:
+        if(hasOpenSession(id)) return handleKeyMgmtMessage(m.key_mgmt_message(), id, m.session());
         errorResponse(r, ERR_BAD_SESSION);
         break;
     default:
