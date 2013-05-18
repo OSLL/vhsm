@@ -23,4 +23,4 @@ vhsm_rv vhsm_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id);
 
 // Uploads passed secret object to vhsm. The object is then accessible with passed vhsm_key_id.
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED, VHSM_RV_KEY_ID_OCCUPIED
-vhsm_rv vhsm_key_mgmt_create_key(vhsm_key key);
+vhsm_rv vhsm_key_mgmt_create_key(vhsm_session session, vhsm_key key);

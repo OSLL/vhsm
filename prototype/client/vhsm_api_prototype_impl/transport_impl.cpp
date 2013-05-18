@@ -150,6 +150,44 @@ static vhsm_rv send_message_raw_data_response(VhsmMessage const & message,
   }
 }
 
+static vhsm_rv send_message_key_ids_response(VhsmMessage const & message,
+                                             VhsmResponse & response,
+                                             vhsm_key_id * key_ids,
+                                             unsigned int ids_max) {
+  if (!send_message(message, response)) {
+    return VHSM_RV_ERR;
+  }
+  
+  switch (response.type()) {
+    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::KEY_ID_LIST : {
+      if (!response.has_key_ids()) {
+        return VHSM_RV_ERR;
+      }
+      
+      KeyIdList const & fetched_ids_list = response.key_ids();
+      
+      if (fetched_ids_list.ids_size() > ids_max) {
+        return VHSM_RV_BAD_BUFFER_SIZE;
+      }
+      
+      for (int i = 0; i != fetched_ids_list.ids_size(); ++i) {
+        VhsmKeyId const & kid = fetched_ids_list.ids(i);
+        
+        if (kid.id().size() + 1 > sizeof(vhsm_key_id::id)) {
+          //this means vhsm's key_id length is greater than the length in this API.
+          return VHSM_RV_ERR;
+        }
+        
+        std::copy(kid.id().begin(), kid.id().end(), (key_ids + i)->id);
+      }
+      
+      return VHSM_RV_OK;
+    }
+    default : return VHSM_RV_ERR;
+  }
+}
+
 //
 // common functions
 //
@@ -221,6 +259,8 @@ vhsm_rv vhsm_tr_logout(vhsm_session session) {
 //
 // digest functions
 //
+
+//TODO REFACTOR: extract function: create_digest_message()
 
 vhsm_rv vhsm_tr_digest_init_sha1(vhsm_session session) {
   VhsmMessage message;
@@ -309,6 +349,8 @@ vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, uns
 // MAC functions
 //
 
+//TODO REFACTOR: extract function: create_mac_message()
+
 vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
   VhsmMessage message;
   VhsmResponse response;
@@ -378,3 +420,64 @@ vhsm_rv vhsm_tr_mac_end(vhsm_session session, unsigned char * mac_ptr, unsigned 
   
   return send_message_raw_data_response(message, response, mac_ptr, mac_size);
 }
+
+
+//
+// key management functions
+//
+
+static VhsmMessage create_key_management_message(VhsmKeyMgmtMessage_MessageType type, vhsm_session session) {
+  VhsmMessage message;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
+  
+  message.set_message_class(KEY_MGMT);
+  message.mutable_key_mgmt_message()->
+          set_type(type);
+  
+  return message;
+}
+
+vhsm_rv vhsm_tr_key_mgmt_get_key_ids_count(vhsm_session session, unsigned int * ids_count) {
+  VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::GET_KEY_IDS_COUNT, session);
+  VhsmResponse response;
+  
+  return send_message_unsigned_int_response(message, response, ids_count);
+}
+
+vhsm_rv vhsm_tr_key_mgmt_get_key_ids(vhsm_session session, vhsm_key_id * ids, unsigned int ids_count) {
+  VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::GET_KEY_IDS, session);
+  VhsmResponse response;
+  
+  return send_message_key_ids_response(message, response, ids, ids_count);
+}
+
+vhsm_rv vhsm_tr_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id) {
+  VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::DELETE_KEY, session);
+  VhsmResponse response;
+  
+  message.mutable_key_mgmt_message()->
+          mutable_delete_key_message()->
+          mutable_key_id()->
+          set_id((void const *) key_id.id, sizeof(key_id.id));
+  
+  return send_message_ok_response(message, response);
+}
+
+vhsm_rv vhsm_tr_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
+  VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::CREATE_KEY, session);
+  VhsmResponse response;
+  
+  message.mutable_key_mgmt_message()->
+          mutable_create_key_message()->
+          mutable_key_id()->
+          set_id((void const *) key.id.id, sizeof(key.id.id));
+  message.mutable_key_mgmt_message()->
+          mutable_create_key_message()->
+          mutable_key()->
+          set_key((void const *) key.key_data, key.data_size);
+  
+  return send_message_ok_response(message, response);
+}
+
