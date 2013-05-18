@@ -201,12 +201,12 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
             errorResponse(r, ERR_BAD_MAC_METHOD);
         } else {
             try {
-                ES::SecretObject pkey = getStorage()->load_namespace(username, keyForUser(username))
-                        .load_object(msg.mechanism().hmac_parameters().key_id().id());
+                ES::Namespace &ns = getStorage()->load_namespace(username, keyForUser(username));
+                ES::SecretObject pkey = ns.load_object(msg.mechanism().hmac_parameters().key_id().id());
                 HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((byte*)pkey.raw_bytes(), pkey.size());
                 if(!clientContexts.insert(std::make_pair(uss, hctx)).second) errorResponse(r, ERR_MAC_INIT);
                 else okResponse(r);
-                getStorage()->unload_namespace(username);
+                getStorage()->unload_namespace(ns);
             } catch (...) {
                 errorResponse(r, ERR_KEY_NOT_FOUND);
             }
@@ -358,7 +358,7 @@ static VhsmResponse handleKeyMgmtMessage(const VhsmKeyMgmtMessage &m, const Clie
             uintResponse(r, uns.list_object_names().size());
             break;
         }
-        getStorage()->unload_namespace(username);
+        getStorage()->unload_namespace(uns);
     } catch (...) {
         errorResponse(r, ERR_VHSM_ERROR);
     }

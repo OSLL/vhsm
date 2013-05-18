@@ -43,6 +43,7 @@ namespace ES {
     SecretObject & operator=(SecretObject const & so) {
       my_hldr->release();
       my_hldr = so.my_hldr;
+      return *this;
     }
     
     void const * raw_bytes() {
