@@ -1,5 +1,5 @@
 PROTOC = protoc --cpp_out=.
-CC = g++ -c -lprotobuf
+CC = g++ -c -fPIC -lprotobuf
 
 protobuf_compile: protobuf_gen
 	$(CC) vhsm_transport.pb.cc

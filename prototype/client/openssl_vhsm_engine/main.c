@@ -12,14 +12,14 @@
 
 #define MAX_KEY_LENGTH 64
 
-#define CMD_SO_PATH         ENGINE_CMD_BASE
-#define CMD_MODULE_PATH 	(ENGINE_CMD_BASE+1)
-#define CMD_PIN             (ENGINE_CMD_BASE+2)
+#define CMD_SO_PATH		ENGINE_CMD_BASE
+#define CMD_USERNAME	(ENGINE_CMD_BASE+1)
+#define CMD_PASSWORD	(ENGINE_CMD_BASE+2)
 
 static const ENGINE_CMD_DEFN te_cmd_defns[] = {
     {CMD_SO_PATH, "SO_PATH", "Specifies the path to the engine's shared library", ENGINE_CMD_FLAG_STRING},
-    {CMD_MODULE_PATH, "MODULE_PATH", "Specifies the path to the vhsm module shared library", ENGINE_CMD_FLAG_STRING},
-    {CMD_PIN, "PIN", "Specifies the pin code", ENGINE_CMD_FLAG_STRING},
+    {CMD_USERNAME, "username", "Specifies the username", ENGINE_CMD_FLAG_STRING},
+    {CMD_PASSWORD, "password", "Specifies the password", ENGINE_CMD_FLAG_STRING},
     {0, NULL, NULL, 0}
 };
 
@@ -200,7 +200,28 @@ static int te_digests(ENGINE *e, const EVP_MD **digest, const int **nids, int ni
 //------------------------------------------------------------------
 //Engine commands control (currently unused)
 
+static void copy_cropped(char *to, const char *from, size_t crop) {
+    size_t ln = strlen(from);
+    ln = ln <= crop ? ln : crop;
+    strncpy(to, from, ln);
+    if(ln < crop) to[ln] = 0;
+}
+
 static int test_engine_ctrl(ENGINE * e, int cmd, long i, void *p, void (*f) ()) {
+	switch (cmd) {
+    case CMD_USERNAME: {
+        printf("set username: %s\n", (const char *)p);
+        copy_cropped(te_vhsm_credentials.username, (const char *)p, 64);
+        return 1;
+    }
+    case CMD_PASSWORD: {
+        printf("set password: %s\n", (const char *)p);
+        copy_cropped(te_vhsm_credentials.password, (const char *)p, 64);
+        return 1;
+    }
+    default:
+        break;
+    }
     return 0;
 }
 
