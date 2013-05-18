@@ -200,29 +200,29 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
                 || !msg.mechanism().hmac_parameters().digest_mechanism().mid() != SHA1) {
             errorResponse(r, ERR_BAD_MAC_METHOD);
         } else {
-            try {
+//            try {
                 ES::Namespace &ns = getStorage()->load_namespace(username, keyForUser(username));
                 ES::SecretObject pkey = ns.load_object(msg.mechanism().hmac_parameters().key_id().id());
                 HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((byte*)pkey.raw_bytes(), pkey.size());
                 if(!clientContexts.insert(std::make_pair(uss, hctx)).second) errorResponse(r, ERR_MAC_INIT);
                 else okResponse(r);
                 getStorage()->unload_namespace(ns);
-            } catch (...) {
-                errorResponse(r, ERR_KEY_NOT_FOUND);
-            }
+//            } catch (...) {
+//                errorResponse(r, ERR_KEY_NOT_FOUND);
+//            }
         }
         break;
     }
     case VhsmMacMessage::UPDATE: {
         const VhsmMacMessage_Update &msg = m.update_message();
         if(i != clientContexts.end()) {
-            try {
+//            try {
                 i->second->Update((const byte*)msg.data_chunk().data().c_str(), msg.data_chunk().data().length());
                 okResponse(r);
-            } catch(...) {
-                errorResponse(r, ERR_VHSM_ERROR);
-                return r;
-            }
+//            } catch(...) {
+//                errorResponse(r, ERR_VHSM_ERROR);
+//                return r;
+//            }
         } else errorResponse(r, ERR_MAC_NOT_INITIALIZED);
         break;
     }
@@ -332,7 +332,7 @@ static VhsmResponse handleKeyMgmtMessage(const VhsmKeyMgmtMessage &m, const Clie
     }
     KeyType userkey = keyForUser(username);
 
-    try{
+//    try{
         ES::Namespace &uns = getStorage()->load_namespace(username, userkey);
         switch(m.type()) {
         case VhsmKeyMgmtMessage::CREATE_KEY:
@@ -359,9 +359,9 @@ static VhsmResponse handleKeyMgmtMessage(const VhsmKeyMgmtMessage &m, const Clie
             break;
         }
         getStorage()->unload_namespace(uns);
-    } catch (...) {
-        errorResponse(r, ERR_VHSM_ERROR);
-    }
+//    } catch (...) {
+//        errorResponse(r, ERR_VHSM_ERROR);
+//    }
 
     return r;
 }
