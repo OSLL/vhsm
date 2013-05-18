@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <cstdio>
 
 namespace ES {
 
@@ -86,6 +87,8 @@ namespace ES {
         return false;
       }
       
+      //TODO limit maximum data size.
+      
       *length = get_file_size(fd);
       
       *bytes = new char[*length];
@@ -97,6 +100,10 @@ namespace ES {
       }
       
       return 0 == close(fd) && bytes_read == *length;
+    }
+    
+    static bool remove_file(std::string const & file) {
+      return 0 == remove(file.c_str());
     }
     
   private:

@@ -1,7 +1,7 @@
 #ifndef CYPHER_H
 #define CYPHER_H
 
-#include "esapi/Types.h"
+#include <Types.h>
 
 namespace ES {
 

@@ -1,9 +1,12 @@
 #pragma once
 
+#include <algorithm>
+
 #include <Namespace.h>
 #include <EncryptedStorage.h>
 
 #include "FsUtil.h"
+#include "ESCypher.h"
 
 namespace ES {
   
@@ -40,27 +43,34 @@ namespace ES {
     }
     
     virtual SecretObject load_object(std::string const & name) const {
-      //TODO implement me;
-      return SecretObject("", (void *)0, 0);
+      char * data = 0;
+      size_t size = 0;
+      
+      //TODO use name mapping
+      if (!read_and_decrypt(std::string(my_root).append(name), &data, &size)) {
+          throw std::runtime_error("Failed to read and decrypt object.");
+      }
+      //TODO use name mapping
+      return SecretObject(std::string(my_root).append(name), (void *) data, size);
     }
     
     virtual bool store_object(std::string const & name, void const * data, size_t size) {
-      //TODO implement me;
-      return false;
+      //TODO use name mapping
+      return encrypt_and_write(std::string(my_root).append(name), (char const *) data, size);
     }
     
     virtual bool delete_object(std::string const & name) {
       //TODO use name mapping
-      return 0 == remove(std::string(my_root).append(name).c_str());
+      return FsUtil::remove_file(std::string(my_root).append(name));
     }
     
     virtual ~FSESNamespace() {
     }
     
     private:
-      void verify_ns_structure() {
+      void verify_ns_structure() const {
         if (!FsUtil::directory_exists(std::string(my_root).append(NS_DIR))
-         || !FsUtil::file_exists(std::string(my_root).append(NS_DIR).append(NS_CHECK_FILE))) {
+         || !FsUtil::file_exists(check_file_path())) {
           throw std::runtime_error("Invalid namespace structure.");
         }
         if (!check_data_matches()) {
@@ -68,23 +78,63 @@ namespace ES {
         }
       }
       
-      bool check_data_matches() {
-        //TODO make sure check data matches with NS_CHECK_DATA
-        return false;
+      bool check_data_matches() const {
+        char *data = 0;
+        size_t size = 0;
+        
+        if (!read_and_decrypt(check_file_path(), &data, &size)) {
+          return false;
+        }
+        
+        bool result = size == NS_CHECK_DATA.size() && std::equal(data, data + size, NS_CHECK_DATA.begin());
+        
+        delete [] data;
+        
+        return result;
       }
       
       void create_ns_structure() {
         if (!FsUtil::create_directory(my_root) ||
             !FsUtil::create_directory(std::string(my_root).append(NS_DIR)) || 
-            !encrypt_and_write_check_data()) {
+            !encrypt_and_write(check_file_path(), NS_CHECK_DATA.c_str(), NS_CHECK_DATA.size())) {
           throw std::runtime_error("Failed to create namespace structure.");
         }
       }
       
-      bool encrypt_and_write_check_data() {
-        //TODO implement me;
-        return false;
+      bool encrypt_and_write(std::string const & file, char const * data, size_t size) {
+        char * encrypted = 0;
+        size_t encrypted_size = 0;
+        
+        if (!Cypher::encrypt(data, size, my_key, &encrypted, &encrypted_size)) {
+          return false;
+        }
+        
+        bool is_written = FsUtil::write_file(file, encrypted, encrypted_size);
+        
+        delete [] encrypted;
+        
+        return is_written;
       }
+      
+      bool read_and_decrypt(std::string const & file, char ** data, size_t * size) const {
+        char *bytes = 0;
+        size_t bytes_size = 0;
+        
+        if (!FsUtil::read_file(file, &bytes, &bytes_size)) {
+          return false;
+        }
+        
+        bool result = Cypher::decrypt(bytes, bytes_size, my_key, data, size);
+        
+        delete [] bytes;
+        
+        return result;
+      }
+      
+      std::string check_file_path() const {
+        return std::string(my_root).append(NS_DIR).append(NS_CHECK_FILE);
+      }
+      
     private:
       FSESNamespace(FSESNamespace const &);
       FSESNamespace & operator=(FSESNamespace const &);
