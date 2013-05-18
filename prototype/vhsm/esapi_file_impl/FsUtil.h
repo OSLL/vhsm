@@ -4,6 +4,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <libgen.h>
@@ -66,7 +67,48 @@ namespace ES {
       return bname;
     }
     
+    static bool write_file(std::string const & path, void const * bytes, size_t length) {
+      int fd = open(path.c_str(), O_WRONLY);
+      
+      if (-1 == fd) {
+        return false;
+      }
+      
+      ssize_t bytes_written = write(fd, bytes, length);
+      
+      return 0 == close(fd) && length == bytes_written;
+    }
+    
+    static bool read_file(std::string const & path, char ** bytes, size_t * length) {
+      int fd = open(path.c_str(), O_RDONLY);
+      
+      if (-1 == fd) {
+        return false;
+      }
+      
+      *length = get_file_size(fd);
+      
+      *bytes = new char[*length];
+      
+      ssize_t bytes_read = read(fd, *bytes, *length);
+      
+      if (bytes_read != *length) {
+        delete [] (*bytes);
+      }
+      
+      return 0 == close(fd) && bytes_read == *length;
+    }
+    
   private:
+    static size_t get_file_size(int fd) {
+      off_t old_pos = lseek(fd, 0, SEEK_CUR);
+      off_t size = lseek(fd, 0, SEEK_END);
+      
+      lseek(fd, old_pos, SEEK_SET);
+      
+      return size;
+    }
+    
     static void file_names(std::string const & path, std::vector<std::string> & names, unsigned char file_type) {
       DIR *dir = opendir(path.c_str());
       struct dirent *de = 0;
