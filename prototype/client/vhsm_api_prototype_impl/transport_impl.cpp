@@ -153,8 +153,11 @@ static vhsm_rv send_message_raw_data_response(VhsmMessage const & message,
 //
 
 
-static VhsmMessage create_session_message(VhsmSessionMessage_MessageType type) {
+static VhsmMessage create_session_message(VhsmSessionMessage_MessageType type, vhsm_session session) {
   VhsmMessage message;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
   
   message.set_message_class(SESSION);
   message.mutable_session_message()->
@@ -164,7 +167,7 @@ static VhsmMessage create_session_message(VhsmSessionMessage_MessageType type) {
 }
 
 vhsm_rv vhsm_tr_start_session(vhsm_session * session_ptr) {
-  VhsmMessage message = create_session_message(VhsmSessionMessage::START);
+  VhsmMessage message = create_session_message(VhsmSessionMessage::START, *session_ptr);
   VhsmResponse response;
   
   if (!send_message(message, response)) {
@@ -185,7 +188,7 @@ vhsm_rv vhsm_tr_start_session(vhsm_session * session_ptr) {
 }
 
 vhsm_rv vhsm_tr_end_session(vhsm_session session) {
-  VhsmMessage message = create_session_message(VhsmSessionMessage::END);
+  VhsmMessage message = create_session_message(VhsmSessionMessage::END, session);
   VhsmResponse response;
   
   return send_message_ok_response(message, response);
@@ -210,6 +213,9 @@ vhsm_rv vhsm_tr_digest_init_sha1(vhsm_session session) {
   VhsmMessage message;
   VhsmResponse response;
   
+  message.mutable_session()->
+          set_sid(session.sid);
+  
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
           set_type(VhsmDigestMessage::INIT);
@@ -224,6 +230,9 @@ vhsm_rv vhsm_tr_digest_init_sha1(vhsm_session session) {
 vhsm_rv vhsm_tr_digest_update(vhsm_session session, unsigned char const * data_chunk, unsigned int chunk_size) {
   VhsmMessage message;
   VhsmResponse response;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
@@ -240,6 +249,9 @@ vhsm_rv vhsm_tr_digest_key(vhsm_session session, vhsm_key_id key_id) {
   VhsmMessage message;
   VhsmResponse response;
   
+  message.mutable_session()->
+          set_sid(session.sid);
+  
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
           set_type(VhsmDigestMessage::UPDATE_KEY);
@@ -255,6 +267,9 @@ vhsm_rv vhsm_tr_digest_get_size(vhsm_session session, unsigned int * digest_size
   VhsmMessage message;
   VhsmResponse response;
   
+  message.mutable_session()->
+          set_sid(session.sid);
+  
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
           set_type(VhsmDigestMessage::GET_DIGEST_SIZE);
@@ -265,6 +280,9 @@ vhsm_rv vhsm_tr_digest_get_size(vhsm_session session, unsigned int * digest_size
 vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, unsigned int digest_size) {
   VhsmMessage message;
   VhsmResponse response;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
   
   message.set_message_class(DIGEST);
   message.mutable_digest_message()->
@@ -281,6 +299,9 @@ vhsm_rv vhsm_tr_digest_end(vhsm_session session, unsigned char * digest_ptr, uns
 vhsm_rv vhsm_tr_mac_init_hmac_sha1(vhsm_session session) {
   VhsmMessage message;
   VhsmResponse response;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
@@ -303,6 +324,9 @@ vhsm_rv vhsm_tr_mac_update(vhsm_session session, unsigned char const * data_chun
   VhsmMessage message;
   VhsmResponse response;
   
+  message.mutable_session()->
+          set_sid(session.sid);
+  
   message.set_message_class(MAC);
   message.mutable_mac_message()->
           set_type(VhsmMacMessage::UPDATE);
@@ -318,6 +342,9 @@ vhsm_rv vhsm_tr_mac_get_size(vhsm_session session, unsigned int * mac_size) {
   VhsmMessage message;
   VhsmResponse response;
   
+  message.mutable_session()->
+          set_sid(session.sid);
+  
   message.set_message_class(MAC);
   message.mutable_mac_message()->
           set_type(VhsmMacMessage::GET_MAC_SIZE);
@@ -328,6 +355,9 @@ vhsm_rv vhsm_tr_mac_get_size(vhsm_session session, unsigned int * mac_size) {
 vhsm_rv vhsm_tr_mac_end(vhsm_session session, unsigned char * mac_ptr, unsigned int mac_size) {
   VhsmMessage message;
   VhsmResponse response;
+  
+  message.mutable_session()->
+          set_sid(session.sid);
   
   message.set_message_class(MAC);
   message.mutable_mac_message()->
