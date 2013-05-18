@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
-
+#include <libgen.h>
 
 namespace ES {
 
@@ -50,6 +50,20 @@ namespace ES {
       file_names(path, names, DT_REG);
       
       return names;
+    }
+    
+    static bool create_directory(std::string const & path) {
+      return 0 == mkdir(path.c_str(), 0660);
+    }
+    
+    static std::string get_basename(std::string const & path) {
+      char * cpath = new char[path.size() + 1];
+      
+      std::string bname(basename(cpath));
+      
+      delete [] cpath;
+      
+      return bname;
     }
     
   private:
