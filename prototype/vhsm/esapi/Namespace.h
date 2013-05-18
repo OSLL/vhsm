@@ -21,6 +21,12 @@ namespace ES {
     
     virtual ~Namespace() {
     }
+  protected:
+    Namespace() {
+    }
+  private:
+    Namespace(Namespace const &);
+    Namespace & operator=(Namespace const &);
   };
   
 }
