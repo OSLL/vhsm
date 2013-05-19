@@ -60,7 +60,7 @@ bool test_digest(vhsm_session session) {
 
 int main(int argc, char ** argv) {
   vhsm_session session;
-  vhsm_credentials credentials;
+  vhsm_credentials credentials = {"user", "password"};
   
   if (VHSM_RV_OK != vhsm_start_session(&session)) {
     std::cerr << "failed to start session" << std::endl;
