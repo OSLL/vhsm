@@ -156,6 +156,9 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
             KeyMap::iterator ki = clientKeys.find(userNameForSession(uss));
             if(ki != clientKeys.end()) clientKeys.erase(ki);
 
+            UserMap::iterator ui = clientNames.find(uss.sid());
+            if(ui != clientNames.end()) clientNames.erase(ui);
+
             if(cs->second.size() == 1) clientSessions.erase(id);
             else cs->second.erase(uss);
             okResponse(r);
@@ -167,6 +170,7 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
             KeyType key;
             if(authClient(m.login_message(), key)) {
                 clientKeys.insert(std::make_pair(m.login_message().username(), key));
+                clientNames.insert(std::make_pair(uss.sid(), m.login_message().username()));
                 okResponse(r);
             } else errorResponse(r, ERR_BAD_CREDENTIALS);
         } else errorResponse(r, ERR_BAD_CREDENTIALS);
@@ -175,7 +179,11 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
         KeyMap::iterator it = clientKeys.find(userNameForSession(uss));
         if(it != clientKeys.end()) {
             clientKeys.erase(it);
-            okResponse(r);
+            UserMap::iterator ut = clientNames.find(uss.sid());
+            if(ut != clientNames.end()) {
+                clientNames.erase(ut);
+                okResponse(r);
+            } else errorResponse(r, ERR_VHSM_ERROR);
         } else errorResponse(r, ERR_BAD_CREDENTIALS);
         break;
     }
