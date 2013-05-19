@@ -198,11 +198,14 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
 
 static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id, const VhsmSession &uss) {
     VhsmResponse r;
+    std::cout << "cheking username... ";
     std::string username = userNameForSession(uss);
     if(username.empty() || !hasLoggedIn(username)) {
+        std::cout << "failed" << std::endl;
         errorResponse(r, ERR_NOT_AUTHORIZED);
         return r;
     }
+    std::cout << "ok" << std::endl;
 
     HMACContextMap::iterator i = clientContexts.find(uss.sid());
     switch(m.type()) {
@@ -210,7 +213,7 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
         const VhsmMacMessage_Init &msg = m.init_message();
         if(msg.mechanism().mid() != HMAC
                 || !msg.mechanism().has_hmac_parameters()
-                || !msg.mechanism().hmac_parameters().digest_mechanism().mid() != SHA1) {
+                || msg.mechanism().hmac_parameters().digest_mechanism().mid() != SHA1) {
             errorResponse(r, ERR_BAD_MAC_METHOD);
         } else {
 //            try {
