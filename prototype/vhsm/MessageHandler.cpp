@@ -8,6 +8,7 @@
 #include <crypto++/files.h>
 #include <map>
 #include <set>
+#include <stdexcept>
 
 typedef CryptoPP::HMAC<CryptoPP::SHA1> HMAC_SHA1_CTX;
 typedef CryptoPP::SHA1 SHA1_CTX;
@@ -213,16 +214,16 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
                 || msg.mechanism().hmac_parameters().digest_mechanism().mid() != SHA1) {
             errorResponse(r, ERR_BAD_MAC_METHOD);
         } else {
-//            try {
+            try {
                 ES::Namespace &ns = getStorage()->load_namespace(username, keyForUser(username));
                 ES::SecretObject pkey = ns.load_object(msg.mechanism().hmac_parameters().key_id().id());
                 HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((byte*)pkey.raw_bytes(), pkey.size());
                 if(!clientContexts.insert(std::make_pair(uss.sid(), hctx)).second) errorResponse(r, ERR_MAC_INIT);
                 else okResponse(r);
                 getStorage()->unload_namespace(ns);
-//            } catch (...) {
-//                errorResponse(r, ERR_KEY_NOT_FOUND);
-//            }
+            } catch (std::runtime_error re) {
+                errorResponse(r, ERR_KEY_NOT_FOUND);
+            }
         }
         break;
     }
