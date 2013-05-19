@@ -14,9 +14,9 @@ namespace ES {
     my_name = FsUtil::get_basename(my_root);
     
     if (!init) {
-    verify_ns_structure();
+      verify_ns_structure();
     } else {
-    create_ns_structure();
+      create_ns_structure();
     }
   }
   
@@ -64,6 +64,7 @@ namespace ES {
      || !FsUtil::file_exists(check_file_path())) {
       throw std::runtime_error("Invalid namespace structure.");
     }
+    
     if (!check_data_matches()) {
       throw std::runtime_error("Invalid key specified.");
     }

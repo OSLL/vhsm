@@ -41,3 +41,11 @@ echo -e "COPYING BINARIES\n"
 cp "client/test_app/test_app" $CLIENT_DIR
 cp "vhsm/vhsm" $TEST_DIR
 cp "host/host" $TEST_DIR
+cp "vhsm/vhsm_admin" $TEST_DIR
+
+
+echo -e "INITILIZING ENCRYPTED STORAGE\n"
+
+cd $TEST_DIR
+./vhsm_admin i ./data
+./vhsm_admin c ./data username password

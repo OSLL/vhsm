@@ -56,7 +56,7 @@ namespace ES {
     }
     
     static bool create_directory(std::string const & path) {
-      return 0 == mkdir(path.c_str(), 0660);
+      return 0 == mkdir(path.c_str(), 0777);
     }
     
     static std::string get_basename(std::string const & path) {
@@ -70,7 +70,7 @@ namespace ES {
     }
     
     static bool write_file(std::string const & path, void const * bytes, size_t length) {
-      int fd = open(path.c_str(), O_WRONLY);
+      int fd = open(path.c_str(), O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
       
       if (-1 == fd) {
         return false;

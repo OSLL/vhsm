@@ -15,19 +15,19 @@ namespace ES {
     magic_file.append(MAGIC_FILE);
     
     if (!init) {
-    if (!FsUtil::file_exists(magic_file)) {
-      throw std::runtime_error("Encrypted storage root not initialized.");
-    }
+      if (!FsUtil::file_exists(magic_file)) {
+        throw std::runtime_error("Encrypted storage root not initialized.");
+      }
     } else {
-    if (!FsUtil::create_directory(my_root)) {
-      throw std::runtime_error("Failed to create encrypted storage root directory.");
-    }
-    
-    FILE * f = fopen(magic_file.c_str(), "a");
-    
-    if (0 == f || 0 != fclose(f)) {
-      throw std::runtime_error("Failed to initialize encrypted storage.");
-    }
+      if (!FsUtil::create_directory(my_root)) {
+        throw std::runtime_error("Failed to create encrypted storage root directory.");
+      }
+      
+      FILE * f = fopen(magic_file.c_str(), "a");
+      
+      if (0 == f || 0 != fclose(f)) {
+        throw std::runtime_error("Failed to initialize encrypted storage.");
+      }
     }
   }
   
@@ -44,19 +44,19 @@ namespace ES {
   
   bool FSEncryptedStorage::namespace_accessible(std::string const & ns, Key const & key) const {
     try {
-    FSESNamespace(std::string(my_root).append(ns), key, false);
-    return true;
+      FSESNamespace(std::string(my_root).append(ns), key, false);
+      return true;
     } catch (std::runtime_error re) {
-    return false;
+      return false;
     }
   }
   
   bool FSEncryptedStorage::create_namespace(std::string const & ns, Key const & key) {
     try {
-    FSESNamespace(std::string(my_root).append(ns), key, true);
-    return true;
+      FSESNamespace(std::string(my_root).append(ns), key, true);
+      return true;
     } catch (std::runtime_error re) {
-    return false;
+      return false;
     }
   }
   

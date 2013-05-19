@@ -2,6 +2,10 @@
 
 #include "EncryptedStorageFactory.h"
 
-ES::EncryptedStorage * EncryptedStorageFactory::create_storage() {
-  return new ES::FSEncryptedStorage("./data/", false);
+ES::EncryptedStorage * EncryptedStorageFactory::create_storage(std::string const & root, bool init) {
+  return new ES::FSEncryptedStorage(root, init);
+}
+
+ES::EncryptedStorage * EncryptedStorageFactory::create_storage(bool init) {
+  return create_storage("./data/", init);
 }
