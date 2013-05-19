@@ -13,12 +13,13 @@ typedef CryptoPP::HMAC<CryptoPP::SHA1> HMAC_SHA1_CTX;
 typedef CryptoPP::SHA1 SHA1_CTX;
 
 typedef ES::Key KeyType;
+typedef int64_t SessionId;
 
 typedef std::map<ClientId, std::set<VhsmSession> > ClSsMap;
-typedef std::map<VhsmSession, ClientId> SsClMap;
-typedef std::map<VhsmSession, std::string> UserMap;
-typedef std::map<VhsmSession, HMAC_SHA1_CTX*> HMACContextMap;
-typedef std::map<VhsmSession, SHA1_CTX*> SHA1ContextMap;
+typedef std::map<SessionId, ClientId> SsClMap;
+typedef std::map<SessionId, std::string> UserMap;
+typedef std::map<SessionId, HMAC_SHA1_CTX*> HMACContextMap;
+typedef std::map<SessionId, SHA1_CTX*> SHA1ContextMap;
 typedef std::map<std::string, KeyType> KeyMap;
 
 static ClSsMap clientSessions;
@@ -34,7 +35,7 @@ static bool operator<(const VhsmSession &s1, const VhsmSession &s2) {
 
 //------------------------------------------------------------------------------
 
-static int64_t getNextSessionId() {
+static SessionId getNextSessionId() {
     return sessionCounter++;
 }
 
@@ -42,10 +43,14 @@ static bool hasOpenSession(const ClientId &id) {
     return clientSessions.find(id) != clientSessions.end();
 }
 
-static std::string userNameForSession(const VhsmSession &s) {
-    UserMap::iterator it = clientNames.find(s);
+static std::string userNameForSession(SessionId sid) {
+    UserMap::iterator it = clientNames.find(sid);
     if(it != clientNames.end()) return it->second;
     return std::string();
+}
+
+static std::string userNameForSession(const VhsmSession &s) {
+    return userNameForSession(s.sid());
 }
 
 static KeyType keyForUser(const std::string &u) {
@@ -137,12 +142,12 @@ static VhsmResponse handleSessionMessage(const VhsmSessionMessage &m, const Clie
         ClSsMap::iterator cs = clientSessions.find(id);
         if(cs == clientSessions.end()) errorResponse(r, ERR_BAD_SESSION);
         else {
-            HMACContextMap::iterator hi = clientContexts.find(uss);
+            HMACContextMap::iterator hi = clientContexts.find(uss.sid());
             if(hi != clientContexts.end()) {
                 delete hi->second;
                 clientContexts.erase(hi);
             }
-            SHA1ContextMap::iterator di = clientDigests.find(uss);
+            SHA1ContextMap::iterator di = clientDigests.find(uss.sid());
             if(di != clientDigests.end()) {
                 delete di->second;
                 clientDigests.erase(di);
@@ -191,7 +196,7 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
         return r;
     }
 
-    HMACContextMap::iterator i = clientContexts.find(uss);
+    HMACContextMap::iterator i = clientContexts.find(uss.sid());
     switch(m.type()) {
     case VhsmMacMessage::INIT: {
         const VhsmMacMessage_Init &msg = m.init_message();
@@ -204,7 +209,7 @@ static VhsmResponse handleMacMessage(const VhsmMacMessage &m, const ClientId &id
                 ES::Namespace &ns = getStorage()->load_namespace(username, keyForUser(username));
                 ES::SecretObject pkey = ns.load_object(msg.mechanism().hmac_parameters().key_id().id());
                 HMAC_SHA1_CTX *hctx = new HMAC_SHA1_CTX((byte*)pkey.raw_bytes(), pkey.size());
-                if(!clientContexts.insert(std::make_pair(uss, hctx)).second) errorResponse(r, ERR_MAC_INIT);
+                if(!clientContexts.insert(std::make_pair(uss.sid(), hctx)).second) errorResponse(r, ERR_MAC_INIT);
                 else okResponse(r);
                 getStorage()->unload_namespace(ns);
 //            } catch (...) {
@@ -265,13 +270,13 @@ static VhsmResponse handleDigestMessage(const VhsmDigestMessage &m, const Client
         return r;
     }
 
-    SHA1ContextMap::iterator i = clientDigests.find(uss);
+    SHA1ContextMap::iterator i = clientDigests.find(uss.sid());
     switch(m.type()) {
     case VhsmDigestMessage::INIT:
         switch(m.init_message().mechanism().mid()) {
         case SHA1: {
             SHA1_CTX *ctx = new SHA1_CTX();
-            if(clientDigests.insert(std::make_pair(uss, ctx)).second) okResponse(r);
+            if(clientDigests.insert(std::make_pair(uss.sid(), ctx)).second) okResponse(r);
             else errorResponse(r, ERR_DIGEST_INIT);
             break;
         }
