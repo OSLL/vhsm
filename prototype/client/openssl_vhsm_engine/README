@@ -1,0 +1,20 @@
+1) Changes in /etc/ssl/openssl.cnf
+
+openssl_conf = openssl_def
+
+[openssl_def]
+engines = engine_section
+
+[engine_section]
+test_engine = test_engine_section
+
+[test_engine_section]
+engine_id = test_engine
+dynamic_path = /path/to/test_engine.so
+
+# username and password required by VHSM for login
+username = user
+password = password
+init = 0
+
+2) Usage: openssl dgst -hmac <key id> -sha1 <files>

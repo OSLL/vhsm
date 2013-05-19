@@ -6,6 +6,7 @@
 #include <openssl/hmac.h>
 #include "../vhsm_api_prototype/common.h"
 #include "../vhsm_api_prototype/mac.h"
+#include "../vhsm_api_prototype/digest.h"
 
 #define TEST_ENGINE_ID "test_engine"
 #define TEST_ENGINE_NAME "Test Engine"
@@ -26,6 +27,7 @@ static const ENGINE_CMD_DEFN te_cmd_defns[] = {
 static vhsm_session te_vhsm_session;
 static vhsm_credentials te_vhsm_credentials;
 static vhsm_mac_method te_vhsm_hmac_sha1_method;
+static vhsm_digest_method te_vhsm_sha1 = {VHSM_DIGEST_SHA1, (void *)0};
 
 //-----------------------------------------------------------------------------
 //Internal implemetation of the algorithm
@@ -65,7 +67,6 @@ EVP_MD digest_hmac_sha1 = {
 //Backend functions adapter
 
 struct REMOTE_HMAC_CTX {
-//    HMAC_CTX hctx;
     int ready;
     int uid_set;
     int skip_update;
@@ -84,40 +85,38 @@ static int init_remote_ctx() {
         remote_ctx.ready = 1;
         remote_ctx.uid_set = 0;
         remote_ctx.skip_update = 0;
-//        HMAC_CTX_init(&remote_ctx.hctx);
     }
     return 1;
 }
 
 static int update_remote_ctx(vhsm_key_id *key_id, int phase, const void *data, size_t count) {
     switch(phase) {
-    case CREATE_IPAD:
+    case CREATE_IPAD: {
         remote_ctx.uid_set = 1;
-        te_vhsm_hmac_sha1_method.key_id = *key_id;
+        memcpy(te_vhsm_hmac_sha1_method.key_id.id, key_id->id, MAX_KEY_LENGTH);
+        printf("Digest init with key_id: %s\n", te_vhsm_hmac_sha1_method.key_id.id);
         return vhsm_mac_init(te_vhsm_session, te_vhsm_hmac_sha1_method) == VHSM_RV_OK;
-//        return HMAC_Init_ex(&remote_ctx.hctx, "user_123_key", 12, EVP_sha(), NULL);
+    }
     case CREATE_OPAD:
         return 1;
     case UPDATE_HASH:
         if(remote_ctx.skip_update) return 1;
+        printf("Digest data update\n");
         return vhsm_mac_update(te_vhsm_session, (const unsigned char*)data, count) == VHSM_RV_OK;
-//        return HMAC_Update(&remote_ctx.hctx, data, count);
     }
     return 0;
 }
 
 static int final_remote_ctx(int phase, unsigned char *md) {
-    unsigned int len;
+    unsigned int len = 20;
     switch(phase) {
     case FINAL_START:
         remote_ctx.skip_update = 1;
         return 1;
     case FINAL_END: {
         remote_ctx.skip_update = 0;
+        printf("Digest final\n");
         return vhsm_mac_end(te_vhsm_session, md, &len) == VHSM_RV_OK;
-//        int res = HMAC_Final(&remote_ctx.hctx, md, &len);
-//        HMAC_CTX_cleanup(&remote_ctx.hctx);
-//        return res;
     }
     }
     return 0;
@@ -229,20 +228,21 @@ static int test_engine_ctrl(ENGINE * e, int cmd, long i, void *p, void (*f) ()) 
 //Engine initialization and finalization
 
 static int test_engine_init(ENGINE *e) {
-    printf("Init called\n");
-    if(!vhsm_start_session(&te_vhsm_session)
-       || !vhsm_login(te_vhsm_session, te_vhsm_credentials)) {
-        printf("Unable to start VHSM session\n");
+    if(vhsm_start_session(&te_vhsm_session) != VHSM_RV_OK) {
+    	printf("Unable to start VHSM session\n");
+        return 0;
+    }
+    if(vhsm_login(te_vhsm_session, te_vhsm_credentials) != VHSM_RV_OK) {
+        printf("Unable to login\n");
         return 0;
     }
 
     te_vhsm_hmac_sha1_method.mac_method = VHSM_MAC_HMAC;
-    te_vhsm_hmac_sha1_method.method_params = 0;
+    te_vhsm_hmac_sha1_method.method_params = &te_vhsm_sha1;
     return 1;
 }
 
 static int test_engine_finish(ENGINE *e) {
-    printf("Finish called\n");
     vhsm_logout(te_vhsm_session);
     vhsm_end_session(te_vhsm_session);
     return 1;
