@@ -48,4 +48,4 @@ echo -e "INITILIZING ENCRYPTED STORAGE\n"
 
 cd $TEST_DIR
 ./vhsm_admin i ./data
-./vhsm_admin c ./data username password
+./vhsm_admin c ./data user password
