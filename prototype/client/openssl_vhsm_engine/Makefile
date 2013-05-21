@@ -8,4 +8,4 @@ test_app: test_app.c
 	gcc -std=c99 -o e_test_app test_app.c -lcrypto -lssl -ldl	
 	
 clean:
-	rm -f *.o *.so
+	rm -f e_test_app *.o *.so

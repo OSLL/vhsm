@@ -42,6 +42,8 @@ cp "client/test_app/test_app" $CLIENT_DIR
 cp "vhsm/vhsm" $TEST_DIR
 cp "host/host" $TEST_DIR
 cp "vhsm/vhsm_admin" $TEST_DIR
+cp "client/openssl_vhsm_engine/test_engine.so" $CLIENT_DIR
+cp "client/openssl_vhsm_engine/e_test_app" $CLIENT_DIR
 
 
 echo -e "INITILIZING ENCRYPTED STORAGE\n"
