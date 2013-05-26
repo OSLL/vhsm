@@ -1,5 +1,5 @@
 CC = g++ -I../files_transport -I../protocol -I./esapi
-LIBS = -lprotobuf -lcryptopp
+LIBS = -lpthread -lprotobuf -lcryptopp
 
 OBJECTS = EncryptedStorageFactory.o MessageHandler.o ../protocol/vhsm_transport.pb.o ./esapi_file_impl/esapi.a
 
