@@ -9,7 +9,7 @@ vhsm_api:
 	$(MAKE) -C vhsm_api_prototype_impl
 
 openssl_engine:
-	$(MAKE) -C openssl_vhsm_engine
+#	$(MAKE) -C openssl_vhsm_engine
 
 clean:
 	$(MAKE) -C vhsm_api_prototype clean

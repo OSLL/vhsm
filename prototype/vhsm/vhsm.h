@@ -9,6 +9,8 @@ struct ClientId {
     }
 
     int64_t id;
+    uint32_t pid;
+    uint32_t veid;
 };
 
 VhsmResponse handleMessage(VhsmMessage &m, ClientId &id);

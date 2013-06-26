@@ -81,6 +81,75 @@ static void start_vhsm(FileTransportReceiver & receiver, FileTransportSender & s
   }
 }
 
+//----------------------------------------------------------------
+
+#include "VhsmMessageTransport.h"
+
+class VHSM {
+public:
+    VHSM() {
+        transport.send_data(NULL, 0, VHSM_REGISTER);
+    }
+
+    ~VHSM() {
+        transport.close();
+    }
+
+    void run() {
+        VhsmMessage msg;
+        ClientId cid;
+
+        while(true) {
+            if(!read_message(msg, cid)) continue;
+
+            if(!send_response(handleMessage(msg, cid), cid)) {
+                std::cerr << "Unable to send response to veid: " << cid.veid << " pid: " << cid.pid << std::endl;
+            }
+        }
+    }
+
+private:
+    VhsmMessageTransport transport;
+
+    bool read_message(VhsmMessage &msg, ClientId &cid) {
+        char buf[MAX_MSG_SIZE];
+        size_t buf_size = MAX_MSG_SIZE;
+
+        if(!transport.receive_data(buf, &buf_size)) {
+            std::cerr << "unable to read data from socket" << std::endl;
+            return false;
+        }
+
+        vmsghdr *msgh = (vmsghdr*)buf;
+        if(msgh->type != VHSM_REQUEST) {
+            std::cerr << "wrong message type" << std::endl;
+            return false;
+        }
+
+        cid.pid = msgh->pid;
+        cid.veid = msgh->veid;
+
+        char *msg_data = (char*)(buf + sizeof(vmsghdr));
+        bool res = msg.ParseFromArray(msg_data, buf_size - sizeof(vmsghdr));
+        if (!res) std::cerr << "ill-formed message received" << std::endl;
+        return res;
+    }
+
+    bool send_response(const VhsmResponse &response, const ClientId &cid) {
+        size_t buf_size = response.ByteSize();
+        char *buf = new char[buf_size];
+
+        bool res = false;
+        if (response.SerializeToArray(buf, buf_size)) {
+            res = transport.send_data(buf, buf_size, VHSM_RESPONSE, cid.pid, cid.veid);
+        }
+
+        if (buf) delete[] buf;
+        return res;
+    }
+};
+
+//----------------------------------------------------------------
 
 int main(int argc, char ** argv) {
   FileTransportReceiver receiver;

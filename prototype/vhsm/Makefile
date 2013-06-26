@@ -1,7 +1,7 @@
-CC = g++ -I../files_transport -I../protocol -I./esapi
+CC = g++ -I../files_transport -I../protocol -I./esapi -I../netlink_transport
 LIBS = -lpthread -lprotobuf -lcryptopp
 
-OBJECTS = EncryptedStorageFactory.o MessageHandler.o ../protocol/vhsm_transport.pb.o ./esapi_file_impl/esapi.a
+OBJECTS = EncryptedStorageFactory.o MessageHandler.o ../protocol/vhsm_transport.pb.o ./esapi_file_impl/esapi.a ../netlink_transport/VhsmMessageTransport.o
 
 all: vhsm vhsm_admin
 
