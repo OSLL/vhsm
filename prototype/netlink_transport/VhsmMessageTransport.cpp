@@ -58,7 +58,7 @@ bool VhsmMessageTransport::send_data(const void *data, size_t size, int message_
     size_t real_msg_size = NLMSG_SPACE(sizeof(vmsghdr) + size);
     nlmsghdr *nlh = (nlmsghdr*)malloc(real_msg_size);
     memset(nlh, 0, real_msg_size);
-    nlh->nlmsg_len = real_msg_size;
+    nlh->nlmsg_len = NLMSG_LENGTH(sizeof(vmsghdr) + size);
     nlh->nlmsg_pid = getpid();
     nlh->nlmsg_flags = 0;
 
@@ -84,7 +84,7 @@ bool VhsmMessageTransport::receive_data(char *buf, size_t *buf_sz_ptr, int *send
         return false;
     }
 
-    *buf_sz_ptr = ((nlmsghdr*)tbuf)->nlmsg_len - NLMSG_HDRLEN;
+    *buf_sz_ptr = NLMSG_PAYLOAD((nlmsghdr*)tbuf, 0); //((nlmsghdr*)tbuf)->nlmsg_len - NLMSG_HDRLEN;
     memcpy(buf, NLMSG_DATA(tbuf), *buf_sz_ptr);
     return true;
 }

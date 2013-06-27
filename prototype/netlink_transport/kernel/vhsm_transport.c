@@ -106,6 +106,7 @@ static struct sk_buff *copy_message(struct nlmsghdr *data) {
     return skb;
 }
 
+/*
 static bool send_message_size(struct sock *sock, uint32_t pid, size_t size) {
     struct sk_buff *skb;
     struct nlmsghdr *nlh;
@@ -131,6 +132,7 @@ static bool send_message_size(struct sock *sock, uint32_t pid, size_t size) {
 
     return nlmsg_unicast(sock, skb, pid) >= 0;
 }
+*/
 
 static bool send_vhsm_request(struct sock *from, struct nlmsghdr *data) {
     struct sk_buff *skb_to;
@@ -232,9 +234,6 @@ static void nl_callback(struct sk_buff *skb) {
 }
 
 static int __init nlexample_init(void) {
-    BUILD_BUG_ON(&((struct vmsghdr*)0)->type != 0);
-    BUILD_BUG_ON(&((struct vmsghdr*)0)->veid != 4);
-    BUILD_BUG_ON(&((struct vmsghdr*)0)->pid != 8);
     return register_pernet_subsys(&net_ops);
 }
 
