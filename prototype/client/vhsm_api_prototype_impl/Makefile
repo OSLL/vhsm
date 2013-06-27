@@ -1,7 +1,7 @@
-CC = g++ -I.. -I../../protocol -I../../files_transport/
+CC = g++ -I.. -I../../protocol -I../../files_transport/ -I../../netlink_transport
 AR = ar crf
 
-OBJECTS = common_impl.o digest_impl.o mac_impl.o key_mgmt_impl.o transport_impl.o ../../protocol/vhsm_transport.pb.o
+OBJECTS = common_impl.o digest_impl.o mac_impl.o key_mgmt_impl.o transport_impl.o ../../protocol/vhsm_transport.pb.o ../../netlink_transport/VhsmMessageTransport.o
 
 static_lib: transport common digest mac key_mgmt
 	$(AR) vhsm_api.a $(OBJECTS)

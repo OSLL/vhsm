@@ -2,6 +2,7 @@
 #define VHSM_H
 
 #include "vhsm_transport.pb.h"
+#include "VhsmMessageTransport.h"
 
 struct ClientId {
     bool operator<(const ClientId &other) const {
@@ -13,6 +14,20 @@ struct ClientId {
     uint32_t veid;
 };
 
-VhsmResponse handleMessage(VhsmMessage &m, ClientId &id);
+class VHSM {
+public:
+    VHSM();
+    ~VHSM();
+
+    void run();
+
+private:
+    VhsmMessageTransport transport;
+
+    bool read_message(VhsmMessage &msg, ClientId &cid) const;
+    bool send_response(const VhsmResponse &response, const ClientId &cid) const;
+
+    VhsmResponse handleMessage(VhsmMessage &m, ClientId &id);
+};
 
 #endif // VHSM_H

@@ -20,15 +20,17 @@ struct vmsghdr {
 #define MAX_MSG_SIZE    4096
 #define MAX_DATA_LENGTH (4096 - NLMSG_HDRLEN - sizeof(vmsghdr))
 #define EMPTY_MSG_SIZE  NLMSG_HDRLEN
+#define GET_MSG_DATA(msg)   (char*)((char*)msg + sizeof(vmsghdr))
 
 class VhsmMessageTransport {
 public:
     VhsmMessageTransport();
+    ~VhsmMessageTransport();
     
     bool open();
     void close();
 
-    bool is_open() const {
+    bool is_opened() const {
         return opened;
     }
 

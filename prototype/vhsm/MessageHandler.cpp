@@ -382,7 +382,7 @@ static VhsmResponse handleKeyMgmtMessage(const VhsmKeyMgmtMessage &m, const Clie
 
 //----------------------------------------------------------------------------------------
 
-VhsmResponse handleMessage(VhsmMessage &m, ClientId &id) {
+VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
     VhsmResponse r;
     switch(m.message_class()) {
     case SESSION:

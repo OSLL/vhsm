@@ -1,6 +1,35 @@
 #include <algorithm>
 #include <vhsm_transport.pb.h>
 
+#include "VhsmMessageTransport.h"
+
+static VhsmMessageTransport transport;
+
+static bool send_message(const VhsmMessage &message, VhsmResponse &response) {
+    if(!transport.is_opened()) return false;
+
+    bool result = false;
+    size_t msg_buf_size = message.ByteSize();
+    char *msg_buf = new char[msg_buf_size];
+
+    char rsp_buf[MAX_MSG_SIZE];
+    size_t rsp_buf_size = MAX_MSG_SIZE;
+    vmsghdr *msgh = 0;
+
+    if(!message.SerializeToArray(msg_buf, msg_buf_size)) goto cleanup;
+    if(!transport.send_data(msg_buf, msg_buf_size, VHSM_REQUEST)) goto cleanup;
+    if(!transport.receive_data(rsp_buf, &rsp_buf_size)) goto cleanup;
+
+    msgh = (vmsghdr*)rsp_buf;
+    if(msgh->type != VHSM_RESPONSE) goto cleanup;
+    result = response.ParseFromArray(GET_MSG_DATA(rsp_buf), rsp_buf_size - sizeof(vmsghdr));
+
+cleanup:
+    delete[] msg_buf;
+    return result;
+}
+
+/*
 #include <FileTransportSender.h>
 #include <FileTransportReceiver.h>
 
@@ -64,6 +93,7 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
   
   return result;
 }
+*/
 
 //
 //transport.h implementation
