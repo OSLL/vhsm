@@ -1,9 +1,21 @@
 #include <iostream>
+#include <stdexcept>
+#include <crypto++/sha.h>
 
 #include "vhsm.h"
 
-static bool operator<(const VhsmSession &s1, const VhsmSession &s2) {
-    return s1.sid() < s2.sid();
+//static bool operator<(const VhsmSession &s1, const VhsmSession &s2) {
+//    return s1.sid() < s2.sid();
+//}
+
+static ES::EncryptedStorage * encrypted_storage = 0;
+
+static ES::EncryptedStorage *getStorage() {
+    if (0 == encrypted_storage) {
+      encrypted_storage = EncryptedStorageFactory().create_storage();
+    }
+
+    return encrypted_storage;
 }
 
 //------------------------------------------------------------------------------
@@ -36,6 +48,10 @@ void VHSM::run() {
 
 //------------------------------------------------------------------------------
 
+SessionId VHSM::getNextSessionId() {
+    return sessionCounter++;
+}
+
 VhsmSession VHSM::openSession(const ClientId &id) {
     SessionId sid = getNextSessionId();
 
@@ -43,24 +59,152 @@ VhsmSession VHSM::openSession(const ClientId &id) {
     s.set_sid(sid);
     ClientSessionMap::iterator cs = clientSessions.find(id);
     if(cs == clientSessions.end()) {
-        std::set<VhsmSession> ss; ss.insert(s);
+        std::set<SessionId> ss; ss.insert(sid);
         clientSessions.insert(std::make_pair(id, ss));
     } else {
-        cs->second.insert(s);
+        cs->second.insert(sid);
     }
 
     return s;
 }
 
-void VHSM::closeSession(const VhsmSession &s) {
+bool VHSM::closeSession(const ClientId &id, const VhsmSession &s) {
+    ClientSessionMap::iterator cs = clientSessions.find(id);
+    if(cs == clientSessions.end()) return false;
 
+//    HMACContextMap::iterator hi = clientContexts.find(uss.sid());
+//    if(hi != clientContexts.end()) {
+//        delete hi->second;
+//        clientContexts.erase(hi);
+//    }
+//    SHA1ContextMap::iterator di = clientDigests.find(uss.sid());
+//    if(di != clientDigests.end()) {
+//        delete di->second;
+//        clientDigests.erase(di);
+//    }
+
+//    KeyMap::iterator ki = clientKeys.find(userNameForSession(uss));
+//    if(ki != clientKeys.end()) clientKeys.erase(ki);
+
+    if(cs->second.size() == 1) clientSessions.erase(id);
+    else cs->second.erase(s.sid());
+
+    UserMap1::iterator ui = users.find(s.sid());
+    if(ui != users.end()) users.erase(ui);
+
+    return true;
 }
 
 //------------------------------------------------------------------------------
 
-SessionId VHSM::getNextSessionId() {
-    return sessionCounter++;
+bool VHSM::isLoggedIn(const ClientId &id, const SessionId &sid) const {
+    ClientSessionMap::const_iterator s = clientSessions.find(id);
+    if(s == clientSessions.end()) return false;
+    if(s->second.find(sid) == s->second.end()) return false;
+    return users.find(sid) != users.end();
 }
+
+bool VHSM::loginUser(const std::string &username, const std::string &password, const SessionId &sid) {
+    CryptoPP::SHA256 keyHashCtx;
+    byte keyHash[32];
+    keyHashCtx.Update((byte*)password.c_str(), password.size());
+    keyHashCtx.Final(keyHash);
+
+    KeyType key(32);
+    memcpy(key.data(), keyHash, 32);
+
+    if(getStorage()->namespace_accessible(username, key)) {
+        users.insert(std::make_pair(sid, VhsmUser(username, key)));
+        return true;
+    }
+
+    return false;
+}
+
+bool VHSM::logoutUser(const SessionId &sid) {
+    UserMap1::iterator it = users.find(sid);
+    if(it == users.end()) return false;
+
+    users.erase(it);
+
+    //need to close all open contexts
+
+    return true;
+}
+
+//------------------------------------------------------------------------------
+
+HMAC_CTX *VHSM::createHMAC(const VhsmDigestMechanismId &did, ES::SecretObject &pkey) const {
+    if(did != SHA1) return NULL;
+    return new CryptoPP::HMAC<CryptoPP::SHA1>((byte*)pkey.raw_bytes(), pkey.size());
+}
+
+bool VHSM::isSupportedMacMethod(const VhsmMacMechanismId &mid, const VhsmDigestMechanismId &did) const {
+    if(mid == HMAC && did == SHA1) return true;
+    return false;
+}
+
+ErrorCode VHSM::macInit(const VhsmMacMechanismId &mid, const VhsmDigestMechanismId &did, const SessionId &sid, const std::string &keyId) {
+    UserMap1::iterator u = users.find(sid);
+    if(u == users.end()) return ERR_NOT_AUTHORIZED;
+
+    try {
+        ErrorCode res = ERR_NO_ERROR;
+        ES::Namespace &ns = getStorage()->load_namespace(u->second.name, u->second.key);
+        ES::SecretObject pkey = ns.load_object(keyId);
+        HMAC_CTX *hctx = createHMAC(did, pkey);
+        if(!hctx)
+            res = ERR_BAD_MAC_METHOD;
+        else
+            res = clientHmacContexts.insert(std::make_pair(sid, hctx)).second ? ERR_NO_ERROR : ERR_MAC_INIT;
+        getStorage()->unload_namespace(ns);
+        return res;
+    } catch (std::runtime_error re) {
+        return ERR_KEY_NOT_FOUND;
+    }
+}
+
+ErrorCode VHSM::macUpdate(const SessionId &sid, const std::string &data) {
+    HMACContextMap1::iterator i = clientHmacContexts.find(sid);
+    if(i == clientHmacContexts.end()) return ERR_MAC_NOT_INITIALIZED;
+    i->second->Update((const byte*)data.c_str(), data.length());
+    return ERR_NO_ERROR;
+}
+
+ErrorCode VHSM::macGetSize(const SessionId &sid, unsigned int *size) const {
+    HMACContextMap1::const_iterator i = clientHmacContexts.find(sid);
+    if(i == clientHmacContexts.end()) return ERR_MAC_NOT_INITIALIZED;
+    *size = i->second->DigestSize();
+    return ERR_NO_ERROR;
+}
+
+ErrorCode VHSM::macFinal(const SessionId &sid, std::vector<char> &ds) {
+    HMACContextMap1::iterator i = clientHmacContexts.find(sid);
+    if(i == clientHmacContexts.end()) return ERR_MAC_NOT_INITIALIZED;
+
+    HMAC_CTX *ctx = i->second;
+//    unsigned int len = ctx->DigestSize();
+    ds.resize(ctx->DigestSize());
+//    byte *dgst = new byte[len];
+
+    try {
+        ctx->Final(reinterpret_cast<byte*>(ds.data()));
+//        ds.resize(len);
+//        memcpy(ds.data(), dgst, len);
+//        delete[] dgst;
+        // !!! WARNING !!!
+        delete ctx;
+        clientHmacContexts.erase(i);
+    } catch(...) {
+        // memory leak?
+//        delete[] dgst;
+        return ERR_VHSM_ERROR;
+    }
+
+    return ERR_NO_ERROR;
+}
+
+//------------------------------------------------------------------------------
 
 bool VHSM::readMessage(VhsmMessage &msg, ClientId &cid) const {
     char buf[MAX_MSG_SIZE];
