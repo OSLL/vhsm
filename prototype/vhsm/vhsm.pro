@@ -12,7 +12,6 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-
 SOURCES += \
     vhsm.cpp \
     MessageHandler.cpp \

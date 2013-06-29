@@ -12,7 +12,7 @@ vhsm_admin:
 	$(CC) vhsm_admin.cpp $(OBJECTS) -o vhsm_admin $(LIBS)
 
 msg_handler: MessageHandler.cpp
-	$(CC) -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
+	$(CC) -Wno-unused-variable -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
 
 esfactory: EncryptedStorageFactory.cpp
 	$(CC) -c EncryptedStorageFactory.cpp -o EncryptedStorageFactory.o $(LIBS)

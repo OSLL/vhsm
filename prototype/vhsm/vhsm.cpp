@@ -2,27 +2,67 @@
 
 #include "vhsm.h"
 
-VHSM::VHSM() {
+static bool operator<(const VhsmSession &s1, const VhsmSession &s2) {
+    return s1.sid() < s2.sid();
+}
+
+//------------------------------------------------------------------------------
+
+VHSM::VHSM() : sessionCounter(0) {
     transport.send_data(NULL, 0, VHSM_REGISTER);
+    createMessageHandlers();
 }
 
 VHSM::~VHSM() {
+    for(std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator i = messageHandlers.begin(); i != messageHandlers.end(); ++i) {
+        delete i->second;
+    }
 }
+
+//------------------------------------------------------------------------------
 
 void VHSM::run() {
     VhsmMessage msg;
     ClientId cid;
 
     while(true) {
-        if(!read_message(msg, cid)) continue;
+        if(!readMessage(msg, cid)) continue;
 
-        if(!send_response(handleMessage(msg, cid), cid)) {
+        if(!sendResponse(handleMessage(msg, cid), cid)) {
             std::cerr << "Unable to send response to veid: " << cid.veid << " pid: " << cid.pid << std::endl;
         }
     }
 }
 
-bool VHSM::read_message(VhsmMessage &msg, ClientId &cid) const {
+//------------------------------------------------------------------------------
+
+VhsmSession VHSM::openSession(const ClientId &id) {
+    SessionId sid = getNextSessionId();
+
+    VhsmSession s;
+    s.set_sid(sid);
+    ClientSessionMap::iterator cs = clientSessions.find(id);
+    if(cs == clientSessions.end()) {
+        std::set<VhsmSession> ss; ss.insert(s);
+        clientSessions.insert(std::make_pair(id, ss));
+    } else {
+        cs->second.insert(s);
+    }
+
+    return s;
+}
+
+void VHSM::closeSession(const VhsmSession &s) {
+
+}
+
+//------------------------------------------------------------------------------
+
+SessionId VHSM::getNextSessionId() {
+    return sessionCounter++;
+}
+
+bool VHSM::readMessage(VhsmMessage &msg, ClientId &cid) const {
     char buf[MAX_MSG_SIZE];
     size_t buf_size = MAX_MSG_SIZE;
 
@@ -46,7 +86,7 @@ bool VHSM::read_message(VhsmMessage &msg, ClientId &cid) const {
     return res;
 }
 
-bool VHSM::send_response(const VhsmResponse &response, const ClientId &cid) const {
+bool VHSM::sendResponse(const VhsmResponse &response, const ClientId &cid) const {
     size_t buf_size = response.ByteSize();
     char *buf = new char[buf_size];
 
@@ -59,7 +99,7 @@ bool VHSM::send_response(const VhsmResponse &response, const ClientId &cid) cons
     return res;
 }
 
-//----------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 int main(int argc, char *argv[]) {
     VHSM vhsm;
