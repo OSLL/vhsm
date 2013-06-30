@@ -3,13 +3,13 @@
 
 #include "vhsm_transport.pb.h"
 #include "VhsmMessageTransport.h"
-#include "EncryptedStorageFactory.h"
+#include "EncryptedStorage.h"
 #include <crypto++/hmac.h>
-
 #include <set>
 
 typedef int64_t SessionId;
 typedef ES::Key KeyType;
+typedef ES::SecretObject PKeyType;
 
 struct ClientId {
     bool operator<(const ClientId &other) const {
@@ -29,15 +29,13 @@ struct VhsmUser {
 };
 
 typedef std::map<ClientId, std::set<SessionId> > ClientSessionMap;
-typedef std::map<SessionId, VhsmUser> UserMap1;
+typedef std::map<SessionId, VhsmUser> UserMap;
 
 typedef CryptoPP::HMAC_Base HMAC_CTX;
-typedef CryptoPP::HashTransformation* Digest_CTX;
+typedef CryptoPP::HashTransformation Digest_CTX;
 
-typedef std::map<SessionId, HMAC_CTX*> HMACContextMap1;
+typedef std::map<SessionId, HMAC_CTX*> HMACContextMap;
 typedef std::map<SessionId, Digest_CTX*> DigestContextMap;
-
-static const ErrorCode ERR_NO_ERROR = static_cast<ErrorCode>((int)ErrorCode_MIN - 1);
 
 //------------------------------------------------------------------------------
 
@@ -58,6 +56,24 @@ private:
 
 protected:
     HandlerMap handlers;
+};
+
+//------------------------------------------------------------------------------
+
+class VhsmStorage {
+public:
+    VhsmStorage();
+    ~VhsmStorage();
+
+    bool hasUser(const VhsmUser &user) const;
+    PKeyType getUserPrivateKey(const VhsmUser &user, const std::string &keyId) const;
+
+    ErrorCode createKey(const VhsmUser &user, const std::string &keyId, const std::string &keyData);
+    ErrorCode deleteKey(const VhsmUser &user, const std::string &keyId);
+    std::vector<std::string> getKeyIds(const VhsmUser &user) const;
+
+private:
+    ES::EncryptedStorage *storage;
 };
 
 //------------------------------------------------------------------------------
@@ -83,26 +99,36 @@ public:
     ErrorCode macFinal(const SessionId &sid, std::vector<char> &ds);
 
     bool isSupportedDigestMethod(const VhsmDigestMechanismId &did) const;
+    ErrorCode digestInit(const VhsmDigestMechanismId &did, const SessionId &sid);
+    ErrorCode digestUpdate(const SessionId &sid, const std::string &data);
+    ErrorCode digestGetSize(const SessionId &sid, unsigned int *size) const;
+    ErrorCode digestFinal(const SessionId &sid, std::vector<char> &ds);
+
+    ErrorCode createKey(const SessionId &sid, const std::string &keyId, const std::string &keyData);
+    ErrorCode deleteKey(const SessionId &sid, const std::string &keyId);
+    std::vector<std::string> getKeyIds(const SessionId &sid) const;
 
 private:
     VhsmMessageTransport transport;
+    VhsmStorage storage;
     std::map<VhsmMessageClass, VhsmMessageHandler*> messageHandlers;
     int64_t sessionCounter;
 
-    UserMap1 users;
+    UserMap users;
     ClientSessionMap clientSessions;
-    HMACContextMap1 clientHmacContexts;
+    HMACContextMap clientHmacContexts;
     DigestContextMap clientDigestContexts;
 
     bool readMessage(VhsmMessage &msg, ClientId &cid) const;
     bool sendResponse(const VhsmResponse &response, const ClientId &cid) const;
 
     VhsmResponse handleMessage(VhsmMessage &m, ClientId &id);
+
     void createMessageHandlers();
-
     SessionId getNextSessionId();
+    HMAC_CTX *createHMACCtx(const VhsmDigestMechanismId &did, PKeyType &pkey) const;
+    Digest_CTX *createDigestCtx(const VhsmDigestMechanismId &did) const;
 
-    HMAC_CTX *createHMAC(const VhsmDigestMechanismId &did, ES::SecretObject &pkey) const;
 };
 
 #endif // VHSM_H

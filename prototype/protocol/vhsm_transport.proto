@@ -20,6 +20,7 @@ message VhsmRawData {
 
 //all possible error codes are listed here
 enum ErrorCode {
+  ERR_NO_ERROR = 0;
   ERR_BAD_ARGUMENTS = 1;
   ERR_BAD_SESSION = 2;
   ERR_BAD_DIGEST_METHOD = 3;

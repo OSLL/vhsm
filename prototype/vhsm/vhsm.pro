@@ -20,7 +20,8 @@ SOURCES += \
     EncryptedStorageFactory.cpp \
     esapi_file_impl/FSESNamespace.cpp \
     esapi_file_impl/FSEncryptedStorage.cpp \
-    esapi_file_impl/ESCypher.cpp
+    esapi_file_impl/ESCypher.cpp \
+    VhsmStorage.cpp
 
 HEADERS += \
     vhsm.h \
