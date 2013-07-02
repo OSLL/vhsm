@@ -2,31 +2,11 @@
 #define VHSM_H
 
 #include "vhsm_transport.pb.h"
+#include "common.h"
 #include "VhsmMessageTransport.h"
-#include "EncryptedStorage.h"
+#include "VhsmStorage.h"
 #include <crypto++/hmac.h>
 #include <set>
-
-typedef int64_t SessionId;
-typedef ES::Key KeyType;
-typedef ES::SecretObject PKeyType;
-
-struct ClientId {
-    bool operator<(const ClientId &other) const {
-        if(veid != other.veid) return veid < other.veid;
-        return pid < other.pid;
-    }
-
-    uint32_t pid;
-    uint32_t veid;
-};
-
-struct VhsmUser {
-    VhsmUser(const std::string &n, const KeyType &k) : name(n), key(k) {}
-
-    std::string name;
-    KeyType key;
-};
 
 typedef std::map<ClientId, std::set<SessionId> > ClientSessionMap;
 typedef std::map<SessionId, VhsmUser> UserMap;
@@ -60,6 +40,7 @@ protected:
 
 //------------------------------------------------------------------------------
 
+/*
 class VhsmStorage {
 public:
     VhsmStorage();
@@ -75,6 +56,7 @@ public:
 private:
     ES::EncryptedStorage *storage;
 };
+*/
 
 //------------------------------------------------------------------------------
 

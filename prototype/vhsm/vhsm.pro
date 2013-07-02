@@ -30,10 +30,12 @@ HEADERS += \
     esapi_file_impl/FsUtil.h \
     esapi_file_impl/FSESNamespace.h \
     esapi_file_impl/FSEncryptedStorage.h \
-    esapi_file_impl/ESCypher.h
+    esapi_file_impl/ESCypher.h \
+    VhsmStorage.h \
+    common.h
 
 INCLUDEPATH += ../netlink_transport/ \
             ../protocol/ \
             ./esapi/
 
-LIBS += -lprotobuf -lcryptopp
+LIBS += -lprotobuf -lcryptopp -lsqlite3

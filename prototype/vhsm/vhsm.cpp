@@ -89,16 +89,9 @@ bool VHSM::isLoggedIn(const ClientId &id, const SessionId &sid) const {
 }
 
 bool VHSM::loginUser(const std::string &username, const std::string &password, const SessionId &sid) {
-    CryptoPP::SHA256 keyHashCtx;
-    byte keyHash[32];
-    keyHashCtx.Update((byte*)password.c_str(), password.size());
-    keyHashCtx.Final(keyHash);
+    VhsmUser user(username, password);
 
-    KeyType key(32);
-    memcpy(key.data(), keyHash, 32);
-
-    VhsmUser user(username, key);
-    if(storage.hasUser(user)) {
+    if(storage.loginUser(user)) {
         users.insert(std::make_pair(sid, user));
         return true;
     }
@@ -121,7 +114,7 @@ bool VHSM::logoutUser(const SessionId &sid) {
 
 HMAC_CTX *VHSM::createHMACCtx(const VhsmDigestMechanismId &did, PKeyType &pkey) const {
     if(did != SHA1) return NULL;
-    return new CryptoPP::HMAC<CryptoPP::SHA1>((byte*)pkey.raw_bytes(), pkey.size());
+    return new CryptoPP::HMAC<CryptoPP::SHA1>((byte*)pkey.data(), pkey.size());
 }
 
 bool VHSM::isSupportedMacMethod(const VhsmMacMechanismId &mid, const VhsmDigestMechanismId &did) const {
@@ -133,17 +126,13 @@ ErrorCode VHSM::macInit(const VhsmMacMechanismId &mid, const VhsmDigestMechanism
     UserMap::iterator u = users.find(sid);
     if(u == users.end()) return ERR_NOT_AUTHORIZED;
 
-    try {
-        ErrorCode res = ERR_NO_ERROR;
-        PKeyType pkey = storage.getUserPrivateKey(u->second, keyId);
-        HMAC_CTX *hctx = createHMACCtx(did, pkey);
+    PKeyType pkey;
+    ErrorCode res = storage.getUserPrivateKey(u->second, keyId, pkey);
+    HMAC_CTX *hctx = createHMACCtx(did, pkey);
 
-        if(!hctx) res = ERR_BAD_MAC_METHOD;
-        else res = clientHmacContexts.insert(std::make_pair(sid, hctx)).second ? ERR_NO_ERROR : ERR_MAC_INIT;
-        return res;
-    } catch (std::runtime_error re) {
-        return ERR_KEY_NOT_FOUND;
-    }
+    if(!hctx) res = ERR_BAD_MAC_METHOD;
+    else res = clientHmacContexts.insert(std::make_pair(sid, hctx)).second ? ERR_NO_ERROR : ERR_MAC_INIT;
+    return res;
 }
 
 ErrorCode VHSM::macUpdate(const SessionId &sid, const std::string &data) {
@@ -238,7 +227,7 @@ ErrorCode VHSM::digestFinal(const SessionId &sid, std::vector<char> &ds) {
 ErrorCode VHSM::createKey(const SessionId &sid, const std::string &keyId, const std::string &keyData) {
     UserMap::iterator i = users.find(sid);
     if(i == users.end()) return ERR_NOT_AUTHORIZED;
-    return storage.createKey(i->second, keyId, keyData);
+    return storage.importKey(i->second, keyData, keyId, 0, true);
 }
 
 ErrorCode VHSM::deleteKey(const SessionId &sid, const std::string &keyId) {
