@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <time.h>
 
 #include <crypto++/osrng.h>
 #include <crypto++/integer.h>

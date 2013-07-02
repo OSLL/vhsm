@@ -3,6 +3,10 @@
 
 #include "vhsm_transport.pb.h"
 
+#include <string>
+#include <stdint.h>
+#include <time.h>
+
 typedef int64_t SessionId;
 typedef std::string KeyType;
 typedef std::string PKeyType;
