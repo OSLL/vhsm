@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <signal.h>
 #include <crypto++/sha.h>
 
 #include "vhsm.h"
@@ -15,6 +16,7 @@ VHSM::~VHSM() {
     for(std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator i = messageHandlers.begin(); i != messageHandlers.end(); ++i) {
         delete i->second;
     }
+    transport.send_data(NULL, 0, VHSM_UNREGISTER);
 }
 
 //------------------------------------------------------------------------------
@@ -284,8 +286,19 @@ bool VHSM::sendResponse(const VhsmResponse &response, const ClientId &cid) const
 
 //------------------------------------------------------------------------------
 
+static VHSM vhsm;
+
+void exit_app(int sig) {
+    exit(0);
+}
+
 int main(int argc, char *argv[]) {
-    VHSM vhsm;
+    struct sigaction sa;
+    sa.sa_handler = exit_app;
+    sa.sa_mask.__val[0] = 0;
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+
     vhsm.run();
     return 0;
 }

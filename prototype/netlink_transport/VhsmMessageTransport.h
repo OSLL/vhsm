@@ -9,7 +9,7 @@
 #define VHSM_RESPONSE   1
 #define VHSM_ERROR      2
 #define VHSM_REGISTER   3
-#define VHSM_INFO       4
+#define VHSM_UNREGISTER 4
 
 struct vmsghdr {
     int type;

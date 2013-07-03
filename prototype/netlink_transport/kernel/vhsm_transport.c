@@ -18,7 +18,7 @@ struct nl_sock {
 #define VHSM_RESPONSE   1
 #define VHSM_ERROR      2
 #define VHSM_REGISTER   3
-#define VHSM_INFO       4
+#define VHSM_UNREGISTER 4
 
 struct vmsghdr {
     int type;
@@ -26,14 +26,13 @@ struct vmsghdr {
     uint32_t pid;
 };
 
-//#define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
-
 //----------------------------------------------------------------------------
 
 static struct sock *vhsm_sock = NULL;
 static uint32_t vhsm_pid;
 
 static LIST_HEAD(sock_list);
+static DEFINE_MUTEX(sock_list_mutex);
 
 static void nl_callback(struct sk_buff *skb);
 
@@ -52,7 +51,9 @@ static int net_init(struct net *net) {
         return -ENODEV;
     }
 
+    mutex_lock(&sock_list_mutex);
     list_add_tail(&nl_sk->list, &sock_list);
+    mutex_unlock(&sock_list_mutex);
     nl_sk->veid = nl_sk->sk->owner_env->veid;
 
     printk(KERN_ERR"Register socket for veid: %d\n", nl_sk->veid);
@@ -60,15 +61,21 @@ static int net_init(struct net *net) {
 }
 
 static void net_exit(struct net *net) {
-//    struct nl_sock *nl_sk;
+    struct nl_sock *nl_sk;
 
-//    list_for_each_entry(nl_sk, &sock_list, list) {
-//        if (sock_net(nl_sk->sk) == net) {
-//            list_del(&nl_sk->list);
-//            netlink_kernel_release(nl_sk->sk);
-//            kfree(nl_sk);
-//        }
-//    }
+    mutex_lock(&sock_list_mutex);
+    list_for_each_entry(nl_sk, &sock_list, list) {
+        if (sock_net(nl_sk->sk) == net) goto found;
+    }
+    mutex_unlock(&sock_list_mutex);
+    return;
+
+found:
+    list_del(&nl_sk->list);
+    mutex_unlock(&sock_list_mutex);
+
+    netlink_kernel_release(nl_sk->sk);
+    kfree(nl_sk);
 }
 
 static struct pernet_operations net_ops = {
@@ -81,10 +88,15 @@ static struct pernet_operations net_ops = {
 static struct sock *find_sock(uint32_t veid) {
     struct nl_sock *nl_sk;
 
+    mutex_lock(&sock_list_mutex);
     list_for_each_entry(nl_sk, &sock_list, list) {
-        if (nl_sk->veid == veid) return nl_sk->sk;
+        if (nl_sk->veid == veid) {
+            mutex_unlock(&sock_list_mutex);
+            return nl_sk->sk;
+        }
     }
 
+    mutex_unlock(&sock_list_mutex);
     return NULL;
 }
 
@@ -106,49 +118,20 @@ static struct sk_buff *copy_message(struct nlmsghdr *data) {
     return skb;
 }
 
-/*
-static bool send_message_size(struct sock *sock, uint32_t pid, size_t size) {
-    struct sk_buff *skb;
-    struct nlmsghdr *nlh;
-    struct vmsghdr *msgh;
-
-    skb = nlmsg_new(sizeof(struct vmsghdr) + sizeof(size_t), 0);
-    if(!skb) return false;
-    NETLINK_CB(skb).dst_group = 0;
-
-    nlh = nlmsg_put(skb, 0, 0, NLMSG_DONE, sizeof(struct vmsghdr) + sizeof(size_t), 0);
-    if(!nlh) {
-        kfree(skb);
-        return false;
-    }
-
-    msgh = (struct vmsghdr*)NLMSG_DATA(nlh);
-    msgh->type = VHSM_INFO;
-    msgh->pid = 0;
-    msgh->veid = 0;
-    *((size_t*)((char*)NLMSG_DATA(nlh) + sizeof(struct vmsghdr))) = size;
-
-    printk(KERN_ERR"Send VHSM_INFO %d to %d\n", size, pid);
-
-    return nlmsg_unicast(sock, skb, pid) >= 0;
-}
-*/
-
-static bool send_vhsm_request(struct sock *from, struct nlmsghdr *data) {
+static bool send_vhsm_request(struct sock *from, struct sk_buff *skb) {
     struct sk_buff *skb_to;
     struct vmsghdr *msgh;
 
     if(!vhsm_sock) return false;
 
-    skb_to = copy_message(data);
+    skb_to = copy_message((struct nlmsghdr*)skb->data);
     if(!skb_to) return false;
 
     msgh = (struct vmsghdr*)NLMSG_DATA(skb_to->data);
-    msgh->pid = data->nlmsg_pid;
+    //msgh->pid = data->nlmsg_pid;
+    msgh->pid = NETLINK_CB(skb).pid;    //portid in new kernels
     msgh->veid = from->owner_env->veid;
 
-    //if(!send_message_size(vhsm_sock, vhsm_pid, data->nlmsg_len)) return false;
-    //printk(KERN_ERR"Sending message to VHSM\n");
     return nlmsg_unicast(vhsm_sock, skb_to, vhsm_pid) >= 0;
 }
 
@@ -170,7 +153,6 @@ static bool send_vhsm_response(struct nlmsghdr *data) {
     skb_to = copy_message(data);
     if(!skb_to) return false;
 
-    //if(!send_message_size(sk, pid, data->nlmsg_len)) return false;
     return nlmsg_unicast(sk, skb_to, pid) >= 0;
 }
 
@@ -205,13 +187,14 @@ static void nl_callback(struct sk_buff *skb) {
 
     nlh = (struct nlmsghdr*)skb->data;
     msgh = (struct vmsghdr*)NLMSG_DATA(nlh);
-    pid = nlh->nlmsg_pid;
+    //pid = nlh->nlmsg_pid;
+    pid = NETLINK_CB(skb).pid; //portid in new kernels
 
     printk(KERN_ERR"Got message type: %d | pid: %d | veid: %d\n", msgh->type, pid, skb->sk->owner_env->veid);
 
     switch(msgh->type) {
     case VHSM_REQUEST:
-        if(!send_vhsm_request(skb->sk, nlh))
+        if(!send_vhsm_request(skb->sk, skb))
             send_error_message(skb->sk, pid);
         break;
     case VHSM_RESPONSE:
@@ -223,10 +206,16 @@ static void nl_callback(struct sk_buff *skb) {
     case VHSM_ERROR:
         break;
     case VHSM_REGISTER:
-//        if(vhsm_sock) break;
+        if(vhsm_sock) break;
         vhsm_sock = skb->sk;
         vhsm_pid = pid;
         printk(KERN_ERR"Registered VHSM | pid: %d | veid: %d\n", vhsm_pid, vhsm_sock->owner_env->veid);
+        break;
+    case VHSM_UNREGISTER:
+        if(!vhsm_sock || pid != vhsm_pid || vhsm_sock->owner_env->veid != skb->sk->owner_env->veid) break;
+        vhsm_sock = 0;
+        vhsm_pid = 0;
+        printk(KERN_ERR"VHSM unregistered\n");
         break;
     default:
         send_error_message(skb->sk, pid);
@@ -238,7 +227,7 @@ static int __init nlexample_init(void) {
 }
 
 void __exit nlexample_exit(void) {
-//   unregister_pernet_subsys(&net_ops);
+   unregister_pernet_subsys(&net_ops);
 }
 
 module_init(nlexample_init);
