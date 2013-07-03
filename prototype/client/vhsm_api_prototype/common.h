@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <stdint.h>
 
 //
 // error handling
@@ -95,3 +96,10 @@ vhsm_rv vhsm_logout(vhsm_session session);
 typedef struct {
   unsigned char id[128];
 } vhsm_key_id;
+
+typedef struct {
+    vhsm_key_id key_id;
+    int purpose;
+    uint32_t length;
+    uint64_t import_date;
+} vhsm_key_info;

@@ -287,6 +287,7 @@ public:
         handlers.insert(std::make_pair(VhsmKeyMgmtMessage::DELETE_KEY, new DeleteKey()));
         handlers.insert(std::make_pair(VhsmKeyMgmtMessage::GET_KEY_IDS, new GetKeyIds()));
         handlers.insert(std::make_pair(VhsmKeyMgmtMessage::GET_KEY_IDS_COUNT, new GetKeyIdsCount()));
+        handlers.insert(std::make_pair(VhsmKeyMgmtMessage::GET_KEY_INFO, new GetKeyInfo()));
     }
 
 private:
@@ -329,6 +330,27 @@ private:
         VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
             VhsmResponse r;
             uintResponse(r, vhsm.getKeyIds(uss.sid()).size());
+            return r;
+        }
+    };
+
+    class GetKeyInfo : public VhsmLocalMessageHandler {
+    public:
+        VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
+            VhsmResponse r;
+            const VhsmKeyMgmtMessage_GetKeyInfo &m = msg.key_mgmt_message().get_key_info_message();
+            std::string keyID = m.has_key_id() ? m.key_id().id() : "";
+            std::vector<VhsmKeyInfo> kinfo = vhsm.getKeyInfo(uss.sid(), keyID);
+            r.set_type(VhsmResponse::KEY_INFO_LIST);
+
+            for(std::vector<VhsmKeyInfo>::iterator i = kinfo.begin(); i != kinfo.end(); ++i) {
+                KeyInfo *ki = r.mutable_key_info()->add_keys();
+                ki->mutable_id()->set_id(i->keyID);
+                ki->set_length(i->length);
+                ki->set_purpose(i->purpose);
+                ki->set_time(i->importDate);
+            }
+
             return r;
         }
     };

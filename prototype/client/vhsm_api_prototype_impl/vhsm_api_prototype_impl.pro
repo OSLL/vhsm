@@ -14,9 +14,11 @@ TEMPLATE = app
 
 
 SOURCES += \
-    transport_impl.cpp
+    transport_impl.cpp \
+    key_mgmt_impl.c
 
-INCLUDEPATH += ../../netlink_transport
+INCLUDEPATH += ../../netlink_transport \
+        ../
 
 HEADERS += \
     transport.h

@@ -104,7 +104,8 @@ static bool send_message(VhsmMessage const & message, VhsmResponse & response) {
 
 //converts error code from one used in protobuf messages to VHSM_RV_* code.
 static vhsm_rv convert_error_code(ErrorCode error) {
-  switch(error) {
+    switch(error) {
+    case ERR_NO_ERROR : return VHSM_RV_OK;
     case ERR_BAD_ARGUMENTS : return VHSM_RV_BAD_ARGUMENTS;
     case ERR_BAD_SESSION : return VHSM_RV_BAD_SESSION;
     case ERR_BAD_DIGEST_METHOD : return VHSM_RV_BAD_DIGEST_METHOD;
@@ -118,7 +119,7 @@ static vhsm_rv convert_error_code(ErrorCode error) {
     case ERR_KEY_ID_OCCUPIED : return VHSM_RV_KEY_ID_OCCUPIED;
     case ERR_NOT_AUTHORIZED : return VHSM_RV_NOT_AUTHORIZED;
     default : return VHSM_RV_ERR;
-  }
+    }
 }
 
 static vhsm_rv send_message_ok_response(VhsmMessage const & message, VhsmResponse & response) {
@@ -211,12 +212,46 @@ static vhsm_rv send_message_key_ids_response(VhsmMessage const & message,
         }
         
         std::copy(kid.id().begin(), kid.id().end(), (key_ids + i)->id);
+        (key_ids + i)->id[kid.id().size()] = 0;
       }
       
       return VHSM_RV_OK;
     }
     default : return VHSM_RV_ERR;
   }
+}
+
+static vhsm_rv send_message_key_info_response(const VhsmMessage &message,
+                                              VhsmResponse &response,
+                                              vhsm_key_info *keys_info,
+                                              unsigned int keys_count) {
+    if(!send_message(message, response)) return VHSM_RV_ERR;
+
+    switch(response.type()) {
+    case VhsmResponse::ERROR: return convert_error_code(response.error_code());
+    case VhsmResponse::KEY_INFO_LIST: {
+        if(!response.has_key_info()) return VHSM_RV_ERR;
+        const KeyInfoList &info_list = response.key_info();
+        if(info_list.keys_size() > keys_count) return VHSM_RV_BAD_BUFFER_SIZE;
+        for (int i = 0; i != info_list.keys_size(); ++i) {
+            const KeyInfo &ki = info_list.keys(i);
+            if(ki.id().id().size() + 1 > sizeof(vhsm_key_id::id)) {
+                //this means vhsm's key_id length is greater than the length in this API.
+                return VHSM_RV_ERR;
+            }
+
+            vhsm_key_info *cki = keys_info + i;
+            cki->length = ki.length();
+            cki->purpose = ki.purpose();
+            cki->import_date = ki.time();
+            std::copy(ki.id().id().begin(), ki.id().id().end(), cki->key_id.id);
+            cki->key_id.id[ki.id().id().size()] = 0;
+        }
+        return VHSM_RV_OK;
+    }
+    default:
+        return VHSM_RV_ERR;
+    }
 }
 
 //
@@ -482,3 +517,16 @@ vhsm_rv vhsm_tr_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
   return send_message_ok_response(message, response);
 }
 
+vhsm_rv vhsm_tr_key_mgmt_get_key_info(vhsm_session session, vhsm_key_info *keys, unsigned int keys_count, vhsm_key_id key_id) {
+    VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::GET_KEY_INFO, session);
+    VhsmResponse response;
+
+    if(key_id.id[0] = 0) {
+        message.mutable_key_mgmt_message()->
+                mutable_get_key_info_message()->
+                mutable_key_id()->
+                set_id((const void*)key_id.id, sizeof(key_id.id));
+    }
+
+    return send_message_key_info_response(message, response, keys, keys_count);
+}

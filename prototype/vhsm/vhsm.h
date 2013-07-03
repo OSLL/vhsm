@@ -89,6 +89,7 @@ public:
     ErrorCode createKey(const SessionId &sid, const std::string &keyId, const std::string &keyData);
     ErrorCode deleteKey(const SessionId &sid, const std::string &keyId);
     std::vector<std::string> getKeyIds(const SessionId &sid) const;
+    std::vector<VhsmKeyInfo> getKeyInfo(const SessionId &sid, const std::string &keyID = "") const;
 
 private:
     VhsmMessageTransport transport;

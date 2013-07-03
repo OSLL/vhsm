@@ -196,6 +196,33 @@ std::vector<std::string> VhsmStorage::getKeyIds(const VhsmUser &user) const {
 
 //------------------------------------------------------------------------------
 
+std::vector<VhsmKeyInfo> VhsmStorage::getKeyInfo(const VhsmUser &user, const std::string &keyID) const {
+    std::string qtext = "SELECT * FROM Keys";
+    if(!keyID.empty()) qtext.append(" WHERE KeyID = ?");
+
+    std::vector<VhsmKeyInfo> kinfo;
+    DB kdb = openDatabase(user.name, user.key);
+    if(kdb.db) {
+        sqlite3_stmt *query = 0;
+         sqlite3_prepare_v2(kdb.db, qtext.c_str(), qtext.size(), &query, NULL);
+         sqlite3_bind_text(query, 1, keyID.c_str(), keyID.size(), SQLITE_STATIC);
+         while(sqlite3_step(query) == SQLITE_ROW) {
+             VhsmKeyInfo i;
+             i.keyID = (char*)sqlite3_column_text(query, 0);
+             sqlite3_column_blob(query, 1);
+             i.length = sqlite3_column_bytes(query, 1);
+             i.purpose = sqlite3_column_int(query, 2);
+             i.importDate = sqlite3_column_int64(query, 3);
+             kinfo.push_back(i);
+         }
+    }
+
+    closeDatabase(kdb, user.name, false);
+    return kinfo;
+}
+
+//------------------------------------------------------------------------------
+
 ErrorCode VhsmStorage::getUserPrivateKey(const VhsmUser &user, const std::string &keyID, std::string &pkey) const {
     static const std::string qtext = "SELECT Key FROM Keys WHERE KeyID = ?";
     ErrorCode result = ERR_BAD_CREDENTIALS;

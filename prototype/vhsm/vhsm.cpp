@@ -245,6 +245,13 @@ std::vector<std::string> VHSM::getKeyIds(const SessionId &sid) const {
     return ids;
 }
 
+std::vector<VhsmKeyInfo> VHSM::getKeyInfo(const SessionId &sid, const std::string &keyID) const {
+    std::vector<VhsmKeyInfo> kinfo;
+    UserMap::const_iterator i = users.find(sid);
+    if(i != users.end()) kinfo = storage.getKeyInfo(i->second, keyID);
+    return kinfo;
+}
+
 //------------------------------------------------------------------------------
 
 bool VHSM::readMessage(VhsmMessage &msg, ClientId &cid) const {
@@ -300,6 +307,7 @@ int main(int argc, char *argv[]) {
     sigaction(SIGINT, &sa, NULL);
 
     vhsm.run();
+
     return 0;
 }
 

@@ -24,6 +24,7 @@ public:
     ErrorCode getUserPrivateKey(const VhsmUser &user, const std::string &keyID, std::string &pkey) const;
     int getKeyIdsCount(const VhsmUser &user) const;
     std::vector<std::string> getKeyIds(const VhsmUser &user) const;
+    std::vector<VhsmKeyInfo> getKeyInfo(const VhsmUser &user, const std::string &keyID) const;
 
     bool loginUser(VhsmUser &user) const;
 

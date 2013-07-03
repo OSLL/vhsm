@@ -28,7 +28,7 @@ struct VhsmUser {
     KeyType key;
 };
 
-struct KeyInfo {
+struct VhsmKeyInfo {
     std::string keyID;
     int purpose;
     size_t length;

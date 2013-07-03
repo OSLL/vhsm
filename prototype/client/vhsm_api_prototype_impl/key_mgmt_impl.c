@@ -1,6 +1,7 @@
 #include <vhsm_api_prototype/key_mgmt.h>
 
 #include "transport.h"
+#include "string.h"
 
 
 // List available key ids. Ids are written to buffer pointed to by 'ids' argument.
@@ -12,9 +13,11 @@ vhsm_rv vhsm_key_mgmt_get_key_ids(vhsm_session session, vhsm_key_id * ids, unsig
   vhsm_rv rv = VHSM_RV_OK;
   unsigned int ids_count = 0;
   
+  /*
   if (0 == ids_count) {
     return VHSM_RV_BAD_ARGUMENTS;
   }
+  */
   
   rv = vhsm_tr_key_mgmt_get_key_ids_count(session, &ids_count);
   if (VHSM_RV_OK != rv) {
@@ -44,3 +47,26 @@ vhsm_rv vhsm_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
   return vhsm_tr_key_mgmt_create_key(session, key);
 }
 
+vhsm_rv vhsm_key_mgmt_get_key_info(vhsm_session session, vhsm_key_info *keys, unsigned int *keys_count_ptr) {
+    vhsm_rv rv = VHSM_RV_OK;
+    unsigned int keys_count = 0;
+
+    rv = vhsm_tr_key_mgmt_get_key_ids_count(session, &keys_count);
+
+    if(!keys) {
+        if(rv != VHSM_RV_OK) return rv;
+    } else if(*keys_count_ptr >= keys_count) {
+        vhsm_key_id id;
+        memset(id.id, 0, sizeof(id.id));
+        rv = vhsm_tr_key_mgmt_get_key_info(session, keys, keys_count, id);
+    } else {
+        rv = VHSM_RV_BAD_BUFFER_SIZE;
+    }
+
+    *keys_count_ptr = keys_count;
+    return rv;
+}
+
+vhsm_rv vhsm_key_mgmt_get_key_info(vhsm_session session, vhsm_key_id key_id, vhsm_key_info *info) {
+    return vhsm_tr_key_mgmt_get_key_info(session, info, 1, key_id);
+}

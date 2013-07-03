@@ -169,6 +169,7 @@ message VhsmKeyMgmtMessage {
     GET_KEY_IDS = 2;
     DELETE_KEY = 3;
     CREATE_KEY = 4;
+    GET_KEY_INFO = 5;
   }
   
   message DeleteKey {
@@ -179,16 +180,32 @@ message VhsmKeyMgmtMessage {
     required VhsmKeyId key_id = 1;
     required VhsmKey key = 2;
   }
-  
+
+  message GetKeyInfo {
+    optional VhsmKeyId key_id = 1;
+  }
+
   required MessageType type = 1;
   
   optional DeleteKey delete_key_message = 2;
   optional CreateKey create_key_message = 3;
+  optional GetKeyInfo get_key_info_message = 4;
 }
 
 //is used as a response to VhsmKeyMgmtMessage::MessageType::GET_KEY_IDS message
 message KeyIdList {
   repeated VhsmKeyId ids = 1;
+}
+
+message KeyInfo {
+  required VhsmKeyId id = 1;
+  required sint64 length = 2;
+  required sint32 purpose = 3;
+  required sint64 time = 4;
+}
+
+message KeyInfoList {
+  repeated KeyInfo keys = 1;
 }
 
 //main vhsm message class - all messages to vhsm should be sent using this message type
@@ -214,6 +231,7 @@ message VhsmResponse {
     UNSIGNED_INT = 4;
     SESSION = 5;
     KEY_ID_LIST = 6;
+    KEY_INFO_LIST = 7;
   }
   
   required ResponseType type = 1;
@@ -225,4 +243,6 @@ message VhsmResponse {
   optional VhsmSession session = 5;
   
   optional KeyIdList key_ids = 6;
+  optional KeyInfoList key_info = 7;
+
 }
