@@ -1,6 +1,7 @@
 #include "vhsm.h"
 #include <map>
 #include <stdexcept>
+#include <iostream>
 
 //------------------------------------------------------------------------------
 
@@ -174,7 +175,7 @@ private:
             if(!vhsm.isSupportedMacMethod(mid, did)) {
                 errorResponse(r, ERR_BAD_MAC_METHOD);
             } else {
-                return makeResponse(vhsm.macInit(mid, did, uss.sid(), msg.mechanism().hmac_parameters().key_id().id()));
+                return makeResponse(vhsm.macInit(mid, did, uss.sid(), msg.mechanism().hmac_parameters().key_id().id().c_str()));
             }
 
             return r;
@@ -298,15 +299,20 @@ private:
     class CreateKey : public VhsmLocalMessageHandler {
     public:
         VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
+            VhsmResponse r;
             const VhsmKeyMgmtMessage_CreateKey &m = msg.key_mgmt_message().create_key_message();
-            return makeResponse(vhsm.createKey(uss.sid(), m.key_id().id(), m.key().key()));
+            std::string keyID = m.key_id().id().c_str();
+            std::string key = m.has_key() ? m.key().key() : "";
+            ErrorCode res = vhsm.importKey(uss.sid(), keyID, key, m.purpose(), m.force_import());
+            res == ERR_NO_ERROR ? rawResponse(r, keyID.c_str(), keyID.size()) : errorResponse(r, res);
+            return r;
         }
     };
 
     class DeleteKey : public VhsmLocalMessageHandler {
     public:
         VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
-            return makeResponse(vhsm.deleteKey(uss.sid(), msg.key_mgmt_message().delete_key_message().key_id().id()));
+            return makeResponse(vhsm.deleteKey(uss.sid(), msg.key_mgmt_message().delete_key_message().key_id().id().c_str()));
         }
     };
 
@@ -339,7 +345,7 @@ private:
         VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
             VhsmResponse r;
             const VhsmKeyMgmtMessage_GetKeyInfo &m = msg.key_mgmt_message().get_key_info_message();
-            std::string keyID = m.has_key_id() ? m.key_id().id() : "";
+            std::string keyID = m.has_key_id() ? m.key_id().id().c_str() : "";
             std::vector<VhsmKeyInfo> kinfo = vhsm.getKeyInfo(uss.sid(), keyID);
             r.set_type(VhsmResponse::KEY_INFO_LIST);
 

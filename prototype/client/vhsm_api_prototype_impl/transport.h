@@ -55,6 +55,6 @@ vhsm_rv vhsm_tr_key_mgmt_get_key_ids(vhsm_session session, vhsm_key_id * ids, un
 
 vhsm_rv vhsm_tr_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id);
 
-vhsm_rv vhsm_tr_key_mgmt_create_key(vhsm_session session, vhsm_key key);
+vhsm_rv vhsm_tr_key_mgmt_import_key(vhsm_session session, vhsm_key key, int purpose, bool force_import, vhsm_key_id * key_id);
 
 vhsm_rv vhsm_tr_key_mgmt_get_key_info(vhsm_session session, vhsm_key_info *keys, unsigned int keys_count, vhsm_key_id key_id);

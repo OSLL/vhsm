@@ -178,7 +178,9 @@ message VhsmKeyMgmtMessage {
   
   message CreateKey {
     required VhsmKeyId key_id = 1;
-    required VhsmKey key = 2;
+    optional VhsmKey key = 2;
+    required sint32 purpose = 3;
+    required bool force_import = 4;
   }
 
   message GetKeyInfo {

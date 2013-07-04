@@ -501,7 +501,7 @@ vhsm_rv vhsm_tr_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id) {
   return send_message_ok_response(message, response);
 }
 
-vhsm_rv vhsm_tr_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
+vhsm_rv vhsm_tr_key_mgmt_import_key(vhsm_session session, vhsm_key key, int purpose, bool force_import, vhsm_key_id *key_id) {
   VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::CREATE_KEY, session);
   VhsmResponse response;
   
@@ -509,19 +509,27 @@ vhsm_rv vhsm_tr_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
           mutable_create_key_message()->
           mutable_key_id()->
           set_id((void const *) key.id.id, sizeof(key.id.id));
+  if(key.key_data) {
+      message.mutable_key_mgmt_message()->
+              mutable_create_key_message()->
+              mutable_key()->
+              set_key((void const *) key.key_data, key.data_size);
+  }
   message.mutable_key_mgmt_message()->
           mutable_create_key_message()->
-          mutable_key()->
-          set_key((void const *) key.key_data, key.data_size);
+          set_purpose(purpose);
+  message.mutable_key_mgmt_message()->
+          mutable_create_key_message()->
+          set_force_import(force_import);
   
-  return send_message_ok_response(message, response);
+  return send_message_raw_data_response(message, response, key_id->id, sizeof(key_id->id));
 }
 
 vhsm_rv vhsm_tr_key_mgmt_get_key_info(vhsm_session session, vhsm_key_info *keys, unsigned int keys_count, vhsm_key_id key_id) {
     VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::GET_KEY_INFO, session);
     VhsmResponse response;
 
-    if(key_id.id[0] = 0) {
+    if(key_id.id[0] != 0) {
         message.mutable_key_mgmt_message()->
                 mutable_get_key_info_message()->
                 mutable_key_id()->

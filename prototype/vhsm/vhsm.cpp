@@ -226,10 +226,10 @@ ErrorCode VHSM::digestFinal(const SessionId &sid, std::vector<char> &ds) {
 
 //------------------------------------------------------------------------------
 
-ErrorCode VHSM::createKey(const SessionId &sid, const std::string &keyId, const std::string &keyData) {
+ErrorCode VHSM::importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, bool forceImport) {
     UserMap::iterator i = users.find(sid);
     if(i == users.end()) return ERR_NOT_AUTHORIZED;
-    return storage.importKey(i->second, keyData, keyId, 0, true);
+    return storage.importKey(i->second, keyData, keyId, purpose, forceImport);
 }
 
 ErrorCode VHSM::deleteKey(const SessionId &sid, const std::string &keyId) {
