@@ -21,7 +21,7 @@ SOURCES += \
     esapi_file_impl/FSESNamespace.cpp \
     esapi_file_impl/FSEncryptedStorage.cpp \
     esapi_file_impl/ESCypher.cpp \
-    VhsmStorage.cpp
+    VhsmStorage.cpp \
 
 HEADERS += \
     vhsm.h \
@@ -36,6 +36,7 @@ HEADERS += \
 
 INCLUDEPATH += ../netlink_transport/ \
             ../protocol/ \
-            ./esapi/
+            ./esapi/ \
+            ../3rdparty
 
 LIBS += -lprotobuf -lcryptopp -lsqlite3

@@ -65,6 +65,9 @@ public:
     VHSM();
     ~VHSM();
 
+    void setStorageRoot(const std::string &path);
+    std::string getStorageRoot() const;
+
     void run();
 
     VhsmSession openSession(const ClientId &id);

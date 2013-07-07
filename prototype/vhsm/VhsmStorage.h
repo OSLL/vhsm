@@ -8,14 +8,27 @@
 
 #include <crypto++/osrng.h>
 
+#include <sys/stat.h>
+
 #define USER_KEY_LENGTH 32
 #define KEY_ID_LENGTH 16
 #define BUF_SIZE 4096
+
+namespace FSUtils {
+    bool getStat(const std::string &path, struct stat *s);
+    bool isDirectoryExists(const std::string &path);
+    bool createDirectory(const std::string &path);
+    bool removeDirectory(const std::string &path);
+    bool removeFile(const std::string &path);
+}
 
 class VhsmStorage {
 public:
     VhsmStorage(const std::string &rootDir = "./data/");
     ~VhsmStorage();
+
+    void setRoot(const std::string &rootDir = "./data/");
+    std::string getRoot() const;
 
     ErrorCode createUser(const std::string &name, const std::string &password);
     ErrorCode importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose = 0, bool nokeygen = false);
@@ -26,7 +39,8 @@ public:
     std::vector<std::string> getKeyIds(const VhsmUser &user) const;
     std::vector<VhsmKeyInfo> getKeyInfo(const VhsmUser &user, const std::string &keyID) const;
 
-    bool loginUser(VhsmUser &user) const;
+    bool loginUser(const VhsmUser &user);
+    void logoutUser(const VhsmUser &user);
 
 private:
     std::string root;
@@ -39,17 +53,21 @@ private:
     };
 
     struct DB {
-        DB() : db(0), key("") {}
+        DB() : key(""), dirty(false) {}
         //maybe we should reset key's buffer in destructor
 
         sqlite3 *db;
         std::string key;
+        bool dirty;
     };
+
+    typedef std::map<std::string, DB> UserDBMap;
+    UserDBMap activeDBs;
 
     //------------------------------------------------------------------------------
 
-    DB openDatabase(const std::string &user, const std::string &password) const;
-    void closeDatabase(DB &db, const std::string &user, bool reencrypt) const;
+    bool openDatabase(const std::string &user, const std::string &password);
+    void closeDatabase(const std::string &user);
 
     //------------------------------------------------------------------------------
 
@@ -65,6 +83,9 @@ private:
     bool inline decryptFile(const std::string &inPath, const std::string &outPath, const std::string &key) const {
         return proccessFile(inPath, outPath, key, false);
     }
+
+    bool decryptFileInMemory(const std::string &inPath, const std::string &key, std::string &output) const;
+    bool encryptFileFromMemory(const std::string &input, const std::string &key, const std::string &outPath) const;
 
     //------------------------------------------------------------------------------
 

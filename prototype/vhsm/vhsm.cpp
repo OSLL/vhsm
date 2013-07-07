@@ -1,9 +1,14 @@
 #include <iostream>
 #include <stdexcept>
-#include <signal.h>
 #include <crypto++/sha.h>
 
 #include "vhsm.h"
+
+#include <sched.h>
+#include <errno.h>
+#include <signal.h>
+#include <sys/mount.h>
+#include <sys/wait.h>
 
 //------------------------------------------------------------------------------
 
@@ -17,6 +22,14 @@ VHSM::~VHSM() {
         delete i->second;
     }
     transport.send_data(NULL, 0, VHSM_UNREGISTER);
+}
+
+void VHSM::setStorageRoot(const std::string &path) {
+    storage.setRoot(path);
+}
+
+std::string VHSM::getStorageRoot() const {
+    return storage.getRoot();
 }
 
 //------------------------------------------------------------------------------
@@ -105,6 +118,8 @@ bool VHSM::logoutUser(const SessionId &sid) {
     UserMap::iterator it = users.find(sid);
     if(it == users.end()) return false;
 
+    storage.logoutUser(it->second);
+
     users.erase(it);
 
     //need to close all open contexts
@@ -130,6 +145,8 @@ ErrorCode VHSM::macInit(const VhsmMacMechanismId &mid, const VhsmDigestMechanism
 
     PKeyType pkey;
     ErrorCode res = storage.getUserPrivateKey(u->second, keyId, pkey);
+    if(res != ERR_NO_ERROR) return res;
+
     HMAC_CTX *hctx = createHMACCtx(did, pkey);
 
     if(!hctx) res = ERR_BAD_MAC_METHOD;
@@ -293,10 +310,38 @@ bool VHSM::sendResponse(const VhsmResponse &response, const ClientId &cid) const
 
 //------------------------------------------------------------------------------
 
-static VHSM vhsm;
+#define CHILD_STACK_SIZE (8 * 1024 * 1024)
 
 void exit_app(int sig) {
     exit(0);
+}
+
+int start_vhsm_loop(void *arg) {
+    VHSM *vhsm = (VHSM*)arg;
+
+    std::string tmpDir = vhsm->getStorageRoot() + "tmp";
+
+    std::cout << "Temporary location: " << tmpDir << std::endl;
+
+    if(!FSUtils::isDirectoryExists(tmpDir)) {
+        std::cout << "Creating tmd dir..." << std::endl;
+        if(!FSUtils::createDirectory(tmpDir)) {
+            std::cout << "Unable to create tmp dir" << std::endl;
+            return -1;
+        }
+    }
+
+    int res = mount("", tmpDir.c_str(), "tmpfs", 0, 0);
+    if(res != 0) {
+        std::cout << "Unable to mount tmpfs: " << strerror(errno) << std::endl;
+        return res;
+    }
+
+    vhsm->run();
+
+    umount(tmpDir.c_str());
+
+    return 0;
 }
 
 int main(int argc, char *argv[]) {
@@ -306,8 +351,27 @@ int main(int argc, char *argv[]) {
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
-    vhsm.run();
+    VHSM vhsm;
 
+    char *cstack = (char*)malloc(CHILD_STACK_SIZE);
+
+//    if(argc == 2) vhsm.setStorageRoot(argv[1]);
+
+    std::cout << "Starting VHSM..." << std::endl;
+
+    int res = clone(start_vhsm_loop, cstack + CHILD_STACK_SIZE, SIGCHLD | CLONE_NEWNS, &vhsm);
+    if(res == -1) {
+        std::cout << "Failed to start vhsm loop: " << strerror(errno) << std::endl;
+        return -1;
+    }
+
+    int st = 0;
+    wait(&st);
+
+    if(st != 0) std::cout << "VHSM failed with code: " << st << " | " << strerror(st) << std::endl;
+    else std::cout << "VHSM finished" << std::endl;
+
+    free(cstack);
     return 0;
 }
 
