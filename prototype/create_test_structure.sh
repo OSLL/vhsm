@@ -47,9 +47,9 @@ insmod ./netlink_transport/kernel/vhsm_transport.ko
 
 echo -e "STARTING VHSM"
 
-cd $VHSM_CNT 
-./vhsm &
-VHSM_PID=$!
+#cd $VHSM_CNT 
+#./vhsm &
+vzctl exec 411 ./vhsm &
 
 echo -e "PAUSE"
 sleep 5
@@ -59,5 +59,5 @@ cd $TESTS
 
 echo -e "STOPPING VHSM"
 
-kill $VHSM_PID
+killall vhsm
 rmmod vhsm_transport
