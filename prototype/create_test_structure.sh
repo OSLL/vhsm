@@ -1,8 +1,9 @@
 #!/bin/bash
 
 TEST_DIR="test_drive"
-CLIENT_DIR=$TEST_DIR"/1"
+CLIENT_DIR=$TEST_DIR"/tests"
 TESTS=$PWD"/client/test_app"
+VHSM_CNT="/var/lib/vz/private/411"
 
 echo -e "RUNNING MAKE CLEAN\n"
 
@@ -26,29 +27,37 @@ echo -e "CREATING FILES AND DIRECTORIES\n"
 mkdir $TEST_DIR
 mkdir $CLIENT_DIR
 
-
 echo -e "COPYING BINARIES\n"
 
 #cp "client/test_app/test_app" $CLIENT_DIR
 cp "vhsm/vhsm" $TEST_DIR
-#cp "host/host" $TEST_DIR
 cp "vhsm/vhsm_admin" $TEST_DIR
-cp "client/openssl_vhsm_engine/test_engine.so" $CLIENT_DIR
-cp "client/openssl_vhsm_engine/e_test_app" $CLIENT_DIR
+#cp "client/openssl_vhsm_engine/test_engine.so" $CLIENT_DIR
+#cp "client/openssl_vhsm_engine/e_test_app" $CLIENT_DIR
+
+echo -e "INITILIZING ENCRYPTED STORAGE\n"
+
+cp "vhsm/vhsm" $VHSM_CNT
+rm -rf $VHSM_CNT"/data"
+./vhsm/vhsm_admin i $VHSM_CNT"/data"
+./vhsm/vhsm_admin c $VHSM_CNT"/data" user password
 
 echo -e "INIT NETLINK MODULE"
 insmod ./netlink_transport/kernel/vhsm_transport.ko
 
-echo -e "COPY VHSM"
-./copy_vhsm.sh
+echo -e "STARTING VHSM"
 
-echo -e "INITILIZING ENCRYPTED STORAGE\n"
-
-cd /var/lib/vz/private/411/ 
+cd $VHSM_CNT 
 ./vhsm &
+VHSM_PID=$!
 
 echo -e "PAUSE"
 sleep 5
 echo -e "RUN TESTS"
 cd $TESTS
 ./run_tests.sh
+
+echo -e "STOPPING VHSM"
+
+kill $VHSM_PID
+rmmod vhsm_transport

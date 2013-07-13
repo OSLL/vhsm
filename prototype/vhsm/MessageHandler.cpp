@@ -335,7 +335,7 @@ private:
     public:
         VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss) {
             VhsmResponse r;
-            uintResponse(r, vhsm.getKeyIds(uss.sid()).size());
+            uintResponse(r, vhsm.getKeyIdsCount(uss.sid()));
             return r;
         }
     };

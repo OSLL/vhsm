@@ -4,5 +4,6 @@ vhsm_transport: VhsmMessageTransport.cpp VhsmMessageTransport.h
 	g++ -O2 -c VhsmMessageTransport.cpp
 
 clean:
+	make -C kernel clean
 	rm -f *.o
 

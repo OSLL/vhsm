@@ -12,7 +12,7 @@
 
 //------------------------------------------------------------------------------
 
-VHSM::VHSM() : sessionCounter(0) {
+VHSM::VHSM(const std::string &storageRoot) : storage(storageRoot), sessionCounter(0) {
     transport.send_data(NULL, 0, VHSM_REGISTER);
     createMessageHandlers();
 }
@@ -22,14 +22,6 @@ VHSM::~VHSM() {
         delete i->second;
     }
     transport.send_data(NULL, 0, VHSM_UNREGISTER);
-}
-
-void VHSM::setStorageRoot(const std::string &path) {
-    storage.setRoot(path);
-}
-
-std::string VHSM::getStorageRoot() const {
-    return storage.getRoot();
 }
 
 //------------------------------------------------------------------------------
@@ -255,6 +247,13 @@ ErrorCode VHSM::deleteKey(const SessionId &sid, const std::string &keyId) {
     return storage.deleteKey(i->second, keyId);
 }
 
+int VHSM::getKeyIdsCount(const SessionId &sid) const {
+    int count = -1;
+    UserMap::const_iterator i = users.find(sid);
+    if(i != users.end()) count = storage.getKeyIdsCount(i->second);
+    return count;
+}
+
 std::vector<std::string> VHSM::getKeyIds(const SessionId &sid) const {
     std::vector<std::string> ids;
     UserMap::const_iterator i = users.find(sid);
@@ -316,6 +315,7 @@ void exit_app(int sig) {
     exit(0);
 }
 
+/*
 int start_vhsm_loop(void *arg) {
     VHSM *vhsm = (VHSM*)arg;
 
@@ -343,6 +343,7 @@ int start_vhsm_loop(void *arg) {
 
     return 0;
 }
+*/
 
 int main(int argc, char *argv[]) {
     struct sigaction sa;
@@ -351,8 +352,16 @@ int main(int argc, char *argv[]) {
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
 
-    VHSM vhsm;
+    std::string storageRoot = argc == 2 ? argv[1] : "./data";
 
+    VHSM vhsm(storageRoot);
+
+    vhsm.run();
+
+    return 0;
+
+
+/*
     char *cstack = (char*)malloc(CHILD_STACK_SIZE);
 
 //    if(argc == 2) vhsm.setStorageRoot(argv[1]);
@@ -373,6 +382,7 @@ int main(int argc, char *argv[]) {
 
     free(cstack);
     return 0;
+*/
 }
 
 /*

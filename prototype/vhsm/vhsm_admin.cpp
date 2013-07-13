@@ -77,6 +77,13 @@ void init_root(int argc, char ** argv) {
 
     std::string path = argv[0];
     mkdir(path.c_str(), 0777);
+
+    std::cout << "Initializing database at: " << path << std::endl;
+
+    VhsmStorage storage(path);
+    if(!storage.initDatabase()) {
+        std::cout << "Unable to init database" << std::endl;
+    }
 }
 
 int main(int argc, char ** argv) {

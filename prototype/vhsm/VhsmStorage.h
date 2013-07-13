@@ -17,19 +17,19 @@
 namespace FSUtils {
     bool getStat(const std::string &path, struct stat *s);
     bool isDirectoryExists(const std::string &path);
+    bool isFileExists(const std::string &path);
     bool createDirectory(const std::string &path);
+    bool createFile(const std::string &path);
     bool removeDirectory(const std::string &path);
     bool removeFile(const std::string &path);
 }
 
 class VhsmStorage {
 public:
-    VhsmStorage(const std::string &rootDir = "./data/");
+    VhsmStorage(const std::string &storageRoot = "./data/");
     ~VhsmStorage();
 
-    void setRoot(const std::string &rootDir = "./data/");
-    std::string getRoot() const;
-
+    bool initDatabase();
     ErrorCode createUser(const std::string &name, const std::string &password);
     ErrorCode importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose = 0, bool nokeygen = false);
     ErrorCode importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose = 0, bool nokeygen = false);
@@ -43,63 +43,50 @@ public:
     void logoutUser(const VhsmUser &user);
 
 private:
-    std::string root;
+    std::string dbPath;
+    sqlite3 *kdb;
+    sqlite3_stmt *createUserQuery, *getUserQuery;
+    sqlite3_stmt *hasKeyIdQuery, *insertKeyQuery, *deleteKeyQuery;
+    sqlite3_stmt *getKeyIdsCountQuery, *getKeyIdsQuery;
+    sqlite3_stmt *getKeyInfoQuery, *getKeysInfoQuery;
+    sqlite3_stmt *getUserPrivateKeyQuery;
     mutable CryptoPP::AutoSeededRandomPool rnd;
 
     struct PKDFInfo {
-        std::vector<char> salt;
+        PKDFInfo(const std::string &s = "", unsigned int i = 512, unsigned int p = 0) : salt(s), iters(i), purpose(p) {}
+
+        std::string salt;
         unsigned int iters;
         unsigned int purpose;
     };
 
-    struct DB {
-        DB() : key(""), dirty(false) {}
-        //maybe we should reset key's buffer in destructor
-
-        sqlite3 *db;
-        std::string key;
-        bool dirty;
-    };
-
-    typedef std::map<std::string, DB> UserDBMap;
-    UserDBMap activeDBs;
+    typedef std::map<std::string, std::pair<int, std::string> > UserKeyMap;
+    UserKeyMap activeUsers;
 
     //------------------------------------------------------------------------------
 
-    bool openDatabase(const std::string &user, const std::string &password);
-    void closeDatabase(const std::string &user);
+    void prepareQueries();
+//    bool openDatabase(const std::string &user, const std::string &password);
+//    void closeDatabase(const std::string &user);
 
     //------------------------------------------------------------------------------
 
     bool encrypt(const std::string &data, const std::string &key, std::string &result) const;
     bool decrypt(const std::string &data, const std::string &key, std::string &result) const;
 
-    bool proccessFile(const std::string &inPath, const std::string &outPath, const std::string &key, bool enc) const;
-
-    bool inline encryptFile(const std::string &inPath, const std::string &outPath, const std::string &key) const {
-        return proccessFile(inPath, outPath, key, true);
-    }
-
-    bool inline decryptFile(const std::string &inPath, const std::string &outPath, const std::string &key) const {
-        return proccessFile(inPath, outPath, key, false);
-    }
-
-    bool decryptFileInMemory(const std::string &inPath, const std::string &key, std::string &output) const;
-    bool encryptFileFromMemory(const std::string &input, const std::string &key, const std::string &outPath) const;
-
     //------------------------------------------------------------------------------
 
-    bool initKeyDatabase(const std::string &path) const;
-    bool hasKeyId(sqlite3 *db, const std::string &keyID) const;
-    bool insertKey(sqlite3 *db, const std::string &keyID, const std::string &key, int purpose) const;
+//    bool initKeyDatabase(const std::string &path) const;
+    bool hasKeyId(const std::string &keyID, int userID) const;
+    bool insertKey(const std::string &keyID, int userID, const std::string &key, int purpose);
 
     //------------------------------------------------------------------------------
 
     std::string getDerivedKey(const PKDFInfo &info, const std::string &password) const;
 
     PKDFInfo generatePKDFOptions(int purpose = 0) const;
-    bool loadPKDFOptions(const std::string &path, PKDFInfo &info) const;
-    bool savePKDFOptions(const std::string &path, const PKDFInfo &info) const;
+//    bool loadPKDFOptions(const std::string &path, PKDFInfo &info) const;
+//    bool savePKDFOptions(const std::string &path, const PKDFInfo &info) const;
 
     std::string generateBlock(size_t size) const;
     std::string base64(const std::string &str) const;

@@ -62,11 +62,8 @@ private:
 
 class VHSM {
 public:
-    VHSM();
+    VHSM(const std::string &storageRoot = "./data");
     ~VHSM();
-
-    void setStorageRoot(const std::string &path);
-    std::string getStorageRoot() const;
 
     void run();
 
@@ -91,6 +88,7 @@ public:
 
     ErrorCode importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, bool forceImport);
     ErrorCode deleteKey(const SessionId &sid, const std::string &keyId);
+    int getKeyIdsCount(const SessionId &sid) const;
     std::vector<std::string> getKeyIds(const SessionId &sid) const;
     std::vector<VhsmKeyInfo> getKeyInfo(const SessionId &sid, const std::string &keyID = "") const;
 
