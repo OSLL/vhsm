@@ -2,7 +2,7 @@
 
 TEST_DIR="test_drive"
 CLIENT_DIR=$TEST_DIR"/tests"
-TESTS=$PWD"/client/test_app"
+TESTS=$PWD"/test"
 VHSM_CNT="/var/lib/vz/private/411"
 
 echo -e "RUNNING MAKE CLEAN\n"
@@ -25,7 +25,7 @@ fi;
 echo -e "CREATING FILES AND DIRECTORIES\n"
 
 mkdir $TEST_DIR
-mkdir $CLIENT_DIR
+#mkdir $CLIENT_DIR
 
 echo -e "COPYING BINARIES\n"
 
