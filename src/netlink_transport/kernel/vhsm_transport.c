@@ -30,6 +30,11 @@ struct vmsghdr {
 
 static struct sock *vhsm_sock = NULL;
 static uint32_t vhsm_pid;
+static uint vhsm_veid = 0;
+
+module_param(vhsm_veid, uint, 0444);
+MODULE_PARM_DESC(vhsm_veid, "VEID of the VHSM container");
+
 
 static LIST_HEAD(sock_list);
 static DEFINE_MUTEX(sock_list_mutex);
@@ -206,13 +211,13 @@ static void nl_callback(struct sk_buff *skb) {
     case VHSM_ERROR:
         break;
     case VHSM_REGISTER:
-        if(vhsm_sock) break;
+        if(skb->sk->owner_env->veid != vhsm_veid) break;
         vhsm_sock = skb->sk;
         vhsm_pid = pid;
         printk(KERN_ERR"Registered VHSM | pid: %d | veid: %d\n", vhsm_pid, vhsm_sock->owner_env->veid);
         break;
     case VHSM_UNREGISTER:
-        if(!vhsm_sock || pid != vhsm_pid || vhsm_sock->owner_env->veid != skb->sk->owner_env->veid) break;
+        if(!vhsm_sock || pid != vhsm_pid || vhsm_veid != skb->sk->owner_env->veid) break;
         vhsm_sock = 0;
         vhsm_pid = 0;
         printk(KERN_ERR"VHSM unregistered\n");
@@ -223,6 +228,7 @@ static void nl_callback(struct sk_buff *skb) {
 }
 
 static int __init nlexample_init(void) {
+    printk(KERN_ERR"VHSM veid: %d\n", vhsm_veid);
     return register_pernet_subsys(&net_ops);
 }
 
