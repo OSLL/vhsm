@@ -4,13 +4,13 @@
 #include <crypto++/sha.h>
 
 #include "vhsm.h"
-
+#include "MessageHandlerTest.h"
 #include <sched.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/mount.h>
 #include <sys/wait.h>
-
+#include "MessageHandler.h"
 //------------------------------------------------------------------------------
 
 VHSM::VHSM(const std::string &storageRoot) : storage(storageRoot), sessionCounter(0) {
@@ -273,8 +273,21 @@ bool VHSM::readMessage(VhsmMessage &msg, ClientId &cid) const {
 bool VHSM::sendResponse(const VhsmResponse &response, const ClientId &cid) const {
     return false;
 }
+//----------------------------------------------------------------------------------------
 
-int main() {
-VHSM v;
-return 0;
+void VHSM::createMessageHandlers() {
+    messageHandlers.insert(std::make_pair(SESSION, new SessionMessageHandler()));
+    messageHandlers.insert(std::make_pair(MAC, new MacMessageHandler()));
+    messageHandlers.insert(std::make_pair(DIGEST, new DigestMessageHandler()));
+    messageHandlers.insert(std::make_pair(KEY_MGMT, new KeyMgmtMessageHandler()));
+}
+
+VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
+    std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator h = messageHandlers.find(m.message_class());
+    if(h == messageHandlers.end()) {
+        VhsmResponse r;
+        errorResponse(r, ERR_BAD_ARGUMENTS);
+        return r;
+    }
+    return h->second->handle(*this, m, id, m.session());
 }
