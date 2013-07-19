@@ -3,7 +3,7 @@
 #include <crypto++/sha.h>
 
 #include "vhsm.h"
-
+#include "MessageHandler.h"
 #include <sched.h>
 #include <errno.h>
 #include <signal.h>
@@ -307,6 +307,22 @@ bool VHSM::sendResponse(const VhsmResponse &response, const ClientId &cid) const
     return res;
 }
 
+void VHSM::createMessageHandlers() {
+    messageHandlers.insert(std::make_pair(SESSION, new SessionMessageHandler()));
+    messageHandlers.insert(std::make_pair(MAC, new MacMessageHandler()));
+    messageHandlers.insert(std::make_pair(DIGEST, new DigestMessageHandler()));
+    messageHandlers.insert(std::make_pair(KEY_MGMT, new KeyMgmtMessageHandler()));
+}
+
+VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
+    std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator h = messageHandlers.find(m.message_class());
+    if(h == messageHandlers.end()) {
+        VhsmResponse r;
+        errorResponse(r, ERR_BAD_ARGUMENTS);
+        return r;
+    }
+    return h->second->handle(*this, m, id, m.session());
+}
 //------------------------------------------------------------------------------
 
 #define CHILD_STACK_SIZE (8 * 1024 * 1024)

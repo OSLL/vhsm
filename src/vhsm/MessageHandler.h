@@ -1,9 +1,13 @@
+#ifndef MESSAGEHANDLER_H
+#define MESSAGEHANDLER_H
 #include "vhsm.h"
 #include <map>
 #include <stdexcept>
 #include <iostream>
 
-//------------------------------------------------------------------------------
+
+class VHSM;
+
 
 static inline void errorResponse(VhsmResponse &r, ErrorCode ec) {
     r.set_type(VhsmResponse::ERROR);
@@ -36,9 +40,50 @@ static inline void rawResponse(VhsmResponse &r, const char *data, unsigned int l
 
 //------------------------------------------------------------------------------
 
-VhsmMessageHandler::VhsmMessageHandler() {}
+class VhsmMessageHandler {
+    typedef std::map<int, VhsmMessageHandler*> HandlerMap;
 
-VhsmMessageHandler::~VhsmMessageHandler() {
+public:
+    VhsmMessageHandler() {}
+    virtual ~VhsmMessageHandler(){
+        for(HandlerMap::iterator i = handlers.begin(); i != handlers.end(); ++i) {
+            delete i->second;
+        }
+    }
+
+    virtual VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss){
+        VhsmResponse r;
+        if(!preprocess(vhsm, msg, id, uss, r)) return r;
+
+        HandlerMap::iterator h = handlers.find(getMessageType(msg));
+        if(h == handlers.end()) {
+            errorResponse(r, ERR_VHSM_ERROR);
+            return r;
+        }
+
+        return h->second->handle(vhsm, msg, id, uss);
+    }
+
+private:
+    virtual int getMessageType(const VhsmMessage &msg) const = 0;
+    virtual bool preprocess(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss, VhsmResponse &r) const{
+        if(!vhsm.isLoggedIn(id, uss.sid())) {
+            errorResponse(r, ERR_NOT_AUTHORIZED);
+            return false;
+        }
+        return true;
+    }
+
+protected:
+    HandlerMap handlers;
+};
+
+//------------------------------------------------------------------------------
+
+
+//VhsmMessageHandler::VhsmMessageHandler() {}
+
+/*VhsmMessageHandler::~VhsmMessageHandler() {
     for(HandlerMap::iterator i = handlers.begin(); i != handlers.end(); ++i) {
         delete i->second;
     }
@@ -64,7 +109,7 @@ bool VhsmMessageHandler::preprocess(VHSM &vhsm, const VhsmMessage &msg, const Cl
     }
     return true;
 }
-
+*/
 //------------------------------------------------------------------------------
 
 class VhsmLocalMessageHandler : public VhsmMessageHandler {
@@ -362,21 +407,5 @@ private:
     };
 };
 
-//----------------------------------------------------------------------------------------
 
-void VHSM::createMessageHandlers() {
-    messageHandlers.insert(std::make_pair(SESSION, new SessionMessageHandler()));
-    messageHandlers.insert(std::make_pair(MAC, new MacMessageHandler()));
-    messageHandlers.insert(std::make_pair(DIGEST, new DigestMessageHandler()));
-    messageHandlers.insert(std::make_pair(KEY_MGMT, new KeyMgmtMessageHandler()));
-}
-
-VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
-    std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator h = messageHandlers.find(m.message_class());
-    if(h == messageHandlers.end()) {
-        VhsmResponse r;
-        errorResponse(r, ERR_BAD_ARGUMENTS);
-        return r;
-    }
-    return h->second->handle(*this, m, id, m.session());
-}
+#endif // MESSAGEHANDLER_H

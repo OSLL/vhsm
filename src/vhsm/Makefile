@@ -1,11 +1,11 @@
 CC = g++ -I../protocol -I../netlink_transport
 LIBS = -lpthread -lprotobuf -lcryptopp -lsqlite3
 
-OBJECTS = MessageHandler.o VhsmStorage.o ../protocol/vhsm_transport.pb.o ../netlink_transport/VhsmMessageTransport.o vhsm.o
+OBJECTS = VhsmStorage.o ../protocol/vhsm_transport.pb.o ../netlink_transport/VhsmMessageTransport.o vhsm.o
 
 all: vhsm vhsm_admin
 
-vhsm: vhsm_storage vhsm.o msg_handler
+vhsm: vhsm_storage vhsm.o
 	$(CC) $(OBJECTS) -o vhsm $(LIBS)
 
 vhsm_admin: vhsm_admin.cpp vhsm_storage
@@ -17,8 +17,8 @@ vhsm.o: vhsm.cpp
 vhsm_storage: VhsmStorage.cpp
 	$(CC) -Wno-unused-variable -c VhsmStorage.cpp -o VhsmStorage.o $(LIBS)
 
-msg_handler: MessageHandler.cpp
-	$(CC) -Wno-unused-variable -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
+#msg_handler: MessageHandler.cpp
+#	$(CC) -Wno-unused-variable -c MessageHandler.cpp -o MessageHandler.o $(LIBS)
 
 clean:
 	rm -f *.o *~ *.out vhsm vhsm_admin
