@@ -1,7 +1,7 @@
 CC = g++ -I../../vhsm -I../../protocol -I../../netlink_transport
 LIBS = -lpthread -lprotobuf -lcryptopp -lsqlite3 -lcppunit
 
-OBJECTS = ../../vhsm/VhsmStorage.o ../../protocol/vhsm_transport.pb.o ../../netlink_transport/VhsmMessageTransport.o vhsm.o MessageHandlerTest.o main.o
+OBJECTS = ../../vhsm/VhsmStorage.o ../../vhsm/MessageHandler.o ../../protocol/vhsm_transport.pb.o ../../netlink_transport/VhsmMessageTransport.o vhsm.o MessageHandlerTest.o main.o
 
 all: mh_tests
 

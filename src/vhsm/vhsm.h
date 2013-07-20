@@ -18,29 +18,8 @@ typedef std::map<SessionId, HMAC_CTX*> HMACContextMap;
 typedef std::map<SessionId, Digest_CTX*> DigestContextMap;
 
 //------------------------------------------------------------------------------
+
 class VhsmMessageHandler;
-
-//------------------------------------------------------------------------------
-
-/*
-class VhsmStorage {
-public:
-    VhsmStorage();
-    ~VhsmStorage();
-
-    bool hasUser(const VhsmUser &user) const;
-    PKeyType getUserPrivateKey(const VhsmUser &user, const std::string &keyId) const;
-
-    ErrorCode createKey(const VhsmUser &user, const std::string &keyId, const std::string &keyData);
-    ErrorCode deleteKey(const VhsmUser &user, const std::string &keyId);
-    std::vector<std::string> getKeyIds(const VhsmUser &user) const;
-
-private:
-    ES::EncryptedStorage *storage;
-};
-*/
-
-//------------------------------------------------------------------------------
 
 class VHSM {
 public:

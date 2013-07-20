@@ -286,7 +286,8 @@ VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
     std::map<VhsmMessageClass, VhsmMessageHandler*>::iterator h = messageHandlers.find(m.message_class());
     if(h == messageHandlers.end()) {
         VhsmResponse r;
-        errorResponse(r, ERR_BAD_ARGUMENTS);
+        r.set_type(VhsmResponse::ERROR);
+        r.set_error_code(ERR_BAD_ARGUMENTS);
         return r;
     }
     return h->second->handle(*this, m, id, m.session());

@@ -14,16 +14,17 @@ TEMPLATE = app
 
 SOURCES += \
     vhsm.cpp \
-    MessageHandler.cpp \
     ../netlink_transport/VhsmMessageTransport.cpp \
     ../protocol/vhsm_transport.pb.cc \
     VhsmStorage.cpp \
+    MessageHandler.cpp
 
 HEADERS += \
     vhsm.h \
     ../netlink_transport/VhsmMessageTransport.h \
     VhsmStorage.h \
-    common.h
+    common.h \
+    MessageHandler.h
 
 INCLUDEPATH += ../netlink_transport/ \
             ../protocol/
