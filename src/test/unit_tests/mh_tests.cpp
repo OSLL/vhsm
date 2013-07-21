@@ -9,6 +9,6 @@ int main ()
   runner.addTest(test);
 
   runner.run();
-    VHSM v;
+  
   return 0;
 }

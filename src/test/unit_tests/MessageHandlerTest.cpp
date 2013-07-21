@@ -8,29 +8,29 @@ void MessageHandlerTest::testSessionMessageHandler(){
     //Start session tests
     VhsmMessage startSessionMsg = createStartMessage();
     VhsmResponse r = sessionMessageHandler.handle(vhsm, startSessionMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success start session test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Start session is failed", r.error_code() == ERR_NO_ERROR);
 
     //login tests
     VhsmMessage loginMsg = createLoginMessage();
     r = sessionMessageHandler.handle(vhsm, loginMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success login test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Login is failed", r.error_code() == ERR_NO_ERROR);
     loginMsg.mutable_session_message()->mutable_login_message()->set_username("evil", sizeof("evil"));
     r = sessionMessageHandler.handle(vhsm, loginMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Trying to login not exest user test", r.error_code() == ERR_BAD_CREDENTIALS);
+    CPPUNIT_ASSERT_MESSAGE("Wrong user or password", r.error_code() == ERR_BAD_CREDENTIALS);
 
     //logout tests
     VhsmMessage logoutMsg = createLogoutMessage();
     r = sessionMessageHandler.handle(vhsm, logoutMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success logout test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Logout is failed", r.error_code() == ERR_NO_ERROR);
     r = sessionMessageHandler.handle(vhsm, logoutMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Trying to logout many times", r.error_code() == ERR_BAD_SESSION);
+    CPPUNIT_ASSERT_MESSAGE("Double logout", r.error_code() == ERR_BAD_SESSION);
 
     //end session tests
     VhsmMessage endMsg = createEndMessage();
     r = sessionMessageHandler.handle(vhsm, endMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success end session test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Close session is failed", r.error_code() == ERR_NO_ERROR);
     r = sessionMessageHandler.handle(vhsm, endMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Trying to second close session test", r.error_code() == ERR_BAD_SESSION);
+    CPPUNIT_ASSERT_MESSAGE("Double close sesson", r.error_code() == ERR_BAD_SESSION);
 }
 
 void MessageHandlerTest::testMacMessageHandler() {
@@ -45,30 +45,30 @@ void MessageHandlerTest::testMacMessageHandler() {
     //Init tests
     VhsmMessage initMacMsg = createMacInitMessage(session);
     VhsmResponse r = macMessageHandler.handle(vhsm, initMacMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success init mac test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Mac init failed", r.error_code() == ERR_NO_ERROR);
 
     //update tests
     VhsmMessage updateMacMsg = createMacUpdateMessage(session);
     r = macMessageHandler.handle(vhsm, updateMacMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success update mac test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Mac update failed", r.error_code() == ERR_NO_ERROR);
 
     //GetMacSizeHandler tests
     VhsmMessage getSizeMessage = createMacMessage(VhsmMacMessage::GET_MAC_SIZE, session);
     r = macMessageHandler.handle(vhsm, getSizeMessage, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success getSize mac test", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Mac get size failed", r.error_code() == ERR_NO_ERROR);
 
     //End tests
     VhsmMessage endMacMsg = createMacMessage(VhsmMacMessage::END, session);
     r = macMessageHandler.handle(vhsm, endMacMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success end mac test", r.error_code() == ERR_NO_ERROR);
-    r = macMessageHandler.handle(vhsm, endMacMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Trying to second end mac test", r.error_code() == ERR_MAC_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Mac end failed", r.error_code() == ERR_NO_ERROR);
 
     //test operations without init
     r = macMessageHandler.handle(vhsm, updateMacMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Update mac test without init", r.error_code() == ERR_MAC_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Mac update without init", r.error_code() == ERR_MAC_NOT_INITIALIZED);
     r = macMessageHandler.handle(vhsm, getSizeMessage, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Update getSize mac test without init", r.error_code() == ERR_MAC_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Mac getSize without init", r.error_code() == ERR_MAC_NOT_INITIALIZED);
+    r = macMessageHandler.handle(vhsm, endMacMsg, id, session);
+    CPPUNIT_ASSERT_MESSAGE("Mac end without init", r.error_code() == ERR_MAC_NOT_INITIALIZED);
 
     //LOGOUT
     sessionMessageHandler.handle(vhsm, createLogoutMessage(), id, session);
@@ -87,35 +87,35 @@ void MessageHandlerTest::testDigestMessageHandler() {
     //init tests
     VhsmMessage initMsg = createDigestInitMsg(session);
     VhsmResponse r = digestMessageHandler.handle(vhsm, initMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success init digest test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Digest init failed", r.error_code() == ERR_NO_ERROR);
 
     //update tests
     VhsmMessage updateMsg = createDigestUpdateMsg(session);
     r = digestMessageHandler.handle(vhsm, updateMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success update digest test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Digest update failed", r.error_code() == ERR_NO_ERROR);
 
     //UpdateKey tests
     VhsmMessage updateKeyMsg = createDigestUpdateKeyMsg(session);
     r = digestMessageHandler.handle(vhsm, updateKeyMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Update key digest test:", r.error_code() == ERR_BAD_DIGEST_METHOD);
+    CPPUNIT_ASSERT_MESSAGE("Digest key update failed", r.error_code() == ERR_BAD_DIGEST_METHOD);
 
     //get size tests
     VhsmMessage getSizeMsg = createDigestMessage(VhsmDigestMessage::GET_DIGEST_SIZE, session);
     r = digestMessageHandler.handle(vhsm, getSizeMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success get size digest test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Digest get size failed", r.error_code() == ERR_NO_ERROR);
 
     //end tests
     VhsmMessage endMsg = createDigestMessage(VhsmDigestMessage::END, session);
     r = digestMessageHandler.handle(vhsm, endMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success end digest test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Digest end failed", r.error_code() == ERR_NO_ERROR);
 
     //test operations without init
     r = digestMessageHandler.handle(vhsm, updateMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Update digest test without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Digets update without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
     r = digestMessageHandler.handle(vhsm, getSizeMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Get size digest test without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Digest get size without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
     r = digestMessageHandler.handle(vhsm, endMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("End digest test without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
+    CPPUNIT_ASSERT_MESSAGE("Digest end without init:", r.error_code() == ERR_DIGEST_NOT_INITIALIZED);
 
     //LOGOUT
     sessionMessageHandler.handle(vhsm, createLogoutMessage(), id, session);
@@ -134,27 +134,29 @@ void MessageHandlerTest::testsKeyMgmtMessageHandler() {
     //create key tests
     VhsmMessage createKeyMsg = createCreateKeyMsg(session);
     VhsmResponse r = keyMgmtMessageHandler.handle(vhsm, createKeyMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success create key test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Create key failed", r.error_code() == ERR_NO_ERROR);
+    r = keyMgmtMessageHandler.handle(vhsm, createKeyMsg, id, session);
+    CPPUNIT_ASSERT_MESSAGE("Create two keys with equal ids", r.error_code() == ERR_KEY_ID_OCCUPIED);
 
     //delete key tests
     VhsmMessage delKeyMsg= createDeleteKeyMsg(session);
     r = keyMgmtMessageHandler.handle(vhsm, delKeyMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success delete key test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Delete key failed", r.error_code() == ERR_NO_ERROR);
 
     //get key ids tests
     VhsmMessage getKeyIdsMsg= createKeyMgmtMessage(VhsmKeyMgmtMessage::GET_KEY_IDS, session);
     r = keyMgmtMessageHandler.handle(vhsm, getKeyIdsMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success get key ids test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Get key ids failed", r.error_code() == ERR_NO_ERROR);
 
     //get key ids count tests
     VhsmMessage getKeyIdsCountMsg= createKeyMgmtMessage(VhsmKeyMgmtMessage::GET_KEY_IDS_COUNT, session);
     r = keyMgmtMessageHandler.handle(vhsm, getKeyIdsCountMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success get key ids count test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Get key ids count failed", r.error_code() == ERR_NO_ERROR);
 
     //get key info tests
     VhsmMessage getKeyIdsKeyMsg= createGetKeyInfoMsg(session);
     r = keyMgmtMessageHandler.handle(vhsm, getKeyIdsKeyMsg, id, session);
-    CPPUNIT_ASSERT_MESSAGE("Success get key info test:", r.error_code() == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("Get key info failed", r.error_code() == ERR_NO_ERROR);
 
     //LOGOUT
     sessionMessageHandler.handle(vhsm, createLogoutMessage(), id, session);

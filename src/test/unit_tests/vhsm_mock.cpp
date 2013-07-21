@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <set>
 #include <crypto++/sha.h>
 
 #include "vhsm.h"
@@ -11,6 +12,8 @@
 #include <sys/mount.h>
 #include <sys/wait.h>
 #include "MessageHandler.h"
+
+
 //------------------------------------------------------------------------------
 
 VHSM::VHSM(const std::string &storageRoot) : storage(storageRoot), sessionCounter(0) {
@@ -232,8 +235,13 @@ ErrorCode VHSM::digestFinal(const SessionId &sid, std::vector<char> &ds) {
 //------------------------------------------------------------------------------
 
 ErrorCode VHSM::importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, bool forceImport) {
+    static std::set<std::string> keyIds;
     UserMap::iterator i = users.find(sid);
     if(i == users.end()) return ERR_NOT_AUTHORIZED;
+    std::pair<std::set<std::string>::iterator,bool> ret = keyIds.insert(keyId);
+    if (!ret.second) {
+        return ERR_KEY_ID_OCCUPIED;
+    }
     return ERR_NO_ERROR;;
 }
 
