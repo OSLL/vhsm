@@ -5,7 +5,7 @@ MH_OBJECTS = ../../vhsm/VhsmStorage.o ../../vhsm/MessageHandler.o ../../protocol
 
 VHSM_OBJECTS = VhsmStorage.o ../../vhsm/MessageHandler.o ../../protocol/vhsm_transport.pb.o ../../netlink_transport/VhsmMessageTransport.o ../../vhsm/vhsm.o VhsmTest.o vhsm_tests.o
 
-all: mh_tests vhsm_tests
+all: mh_tests vhsm_tests storage_tests
 
 mh_tests: vhsm.o mh_tests.o MessageHandlerTest.o
 	$(CC) $(MH_OBJECTS) -o mh_tests $(LIBS)
@@ -34,5 +34,11 @@ vhsm_tests.o: vhsm_tests.cpp ../../vhsm/vhsm.cpp
 	$(CC) -c vhsm_tests.cpp
 
 
+storage_tests: VhsmStorageTest.o storage_tests.cpp
+	$(CC) ../../vhsm/VhsmStorage.o VhsmStorageTest.o storage_tests.cpp -o storage_tests $(LIBS)
+
+VhsmStorageTest.o: VhsmStorageTest.cpp
+	$(CC) -c VhsmStorageTest.cpp -o VhsmStorageTest.o
+
 clean:
-	rm -f *.o *~ *.out vhsm mh_tests vhsm_tests
+	rm -f *.o *~ *.out vhsm mh_tests vhsm_tests storage_tests
