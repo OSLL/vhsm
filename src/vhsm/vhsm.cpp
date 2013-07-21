@@ -5,12 +5,6 @@
 #include "vhsm.h"
 #include "MessageHandler.h"
 
-#include <sched.h>
-#include <errno.h>
-#include <signal.h>
-#include <sys/mount.h>
-#include <sys/wait.h>
-
 //------------------------------------------------------------------------------
 
 VHSM::VHSM(const std::string &storageRoot) : storage(storageRoot), sessionCounter(0) {
@@ -100,8 +94,7 @@ bool VHSM::loginUser(const std::string &username, const std::string &password, c
     VhsmUser user(username, password);
 
     if(storage.loginUser(user)) {
-        users.insert(std::make_pair(sid, user));
-        return true;
+        return users.insert(std::make_pair(sid, user)).second;
     }
 
     return false;
@@ -196,6 +189,7 @@ bool VHSM::isSupportedDigestMethod(const VhsmDigestMechanismId &did) const {
 
 ErrorCode VHSM::digestInit(const VhsmDigestMechanismId &did, const SessionId &sid) {
     Digest_CTX *ctx = createDigestCtx(did);
+    if(!ctx) return ERR_BAD_DIGEST_METHOD;
     if(clientDigestContexts.insert(std::make_pair(sid, ctx)).second) return ERR_NO_ERROR;
     return ERR_DIGEST_INIT;
 }
@@ -324,80 +318,4 @@ VhsmResponse VHSM::handleMessage(VhsmMessage &m, ClientId &id) {
         return r;
     }
     return h->second->handle(*this, m, id, m.session());
-}
-//------------------------------------------------------------------------------
-
-#define CHILD_STACK_SIZE (8 * 1024 * 1024)
-
-void exit_app(int sig) {
-    exit(0);
-}
-
-/*
-int start_vhsm_loop(void *arg) {
-    VHSM *vhsm = (VHSM*)arg;
-
-    std::string tmpDir = vhsm->getStorageRoot() + "tmp";
-
-    std::cout << "Temporary location: " << tmpDir << std::endl;
-
-    if(!FSUtils::isDirectoryExists(tmpDir)) {
-        std::cout << "Creating tmd dir..." << std::endl;
-        if(!FSUtils::createDirectory(tmpDir)) {
-            std::cout << "Unable to create tmp dir" << std::endl;
-            return -1;
-        }
-    }
-
-    int res = mount("", tmpDir.c_str(), "tmpfs", 0, 0);
-    if(res != 0) {
-        std::cout << "Unable to mount tmpfs: " << strerror(errno) << std::endl;
-        return res;
-    }
-
-    vhsm->run();
-
-    umount(tmpDir.c_str());
-
-    return 0;
-}
-*/
-
-int main(int argc, char *argv[]) {
-    struct sigaction sa;
-    sa.sa_handler = exit_app;
-    sa.sa_mask.__val[0] = 0;
-    sa.sa_flags = 0;
-    sigaction(SIGINT, &sa, NULL);
-
-    std::string storageRoot = argc == 2 ? argv[1] : "./data";
-
-    VHSM vhsm(storageRoot);
-
-    vhsm.run();
-
-    return 0;
-
-/*
-    char *cstack = (char*)malloc(CHILD_STACK_SIZE);
-
-//    if(argc == 2) vhsm.setStorageRoot(argv[1]);
-
-    std::cout << "Starting VHSM..." << std::endl;
-
-    int res = clone(start_vhsm_loop, cstack + CHILD_STACK_SIZE, SIGCHLD | CLONE_NEWNS, &vhsm);
-    if(res == -1) {
-        std::cout << "Failed to start vhsm loop: " << strerror(errno) << std::endl;
-        return -1;
-    }
-
-    int st = 0;
-    wait(&st);
-
-    if(st != 0) std::cout << "VHSM failed with code: " << st << " | " << strerror(st) << std::endl;
-    else std::cout << "VHSM finished" << std::endl;
-
-    free(cstack);
-    return 0;
-*/
 }

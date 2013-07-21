@@ -1,9 +1,8 @@
 #!/bin/bash
 
 TESTS=$PWD"/test"
-VHSM_CNT_DIR="/var/lib/vz/private/411"
-VHSM_CNT=411
-
+VHSM_CNT=412
+VHSM_CNT_DIR="/var/lib/vz/private/"$VHSM_CNT
 
 if [[ `vzlist | grep $VHSM_CNT` ]]; then
   vzctl stop $VHSM_CNT
@@ -13,11 +12,11 @@ fi
 echo -e "CREATING CONTAINER"
 
 vzctl create $VHSM_CNT --ostemplate debian-6.0-x86_64
-vzctl set $VHSM_CNT --ipadd 192.168.5.1 --save
+#vzctl set $VHSM_CNT --ipadd 192.168.5.1 --save
 vzctl start $VHSM_CNT
 
-cp /usr/lib/libprotobuf* /var/lib/vz/private/411/usr/lib/
-cp /usr/lib/libcrypto* /var/lib/vz/private/411/usr/lib/
+cp /usr/lib/libprotobuf* "/var/lib/vz/private/"$VHSM_CNT"/usr/lib/"
+cp /usr/lib/libcrypto* "/var/lib/vz/private/"$VHSM_CNT"/usr/lib/"
 
 echo -e "INIT NETLINK MODULE"
 insmod ./netlink_transport/kernel/vhsm_transport.ko vhsm_veid=$VHSM_CNT

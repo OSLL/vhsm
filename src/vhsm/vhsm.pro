@@ -17,7 +17,8 @@ SOURCES += \
     ../netlink_transport/VhsmMessageTransport.cpp \
     ../protocol/vhsm_transport.pb.cc \
     VhsmStorage.cpp \
-    MessageHandler.cpp
+    MessageHandler.cpp \
+    vhsm_app.cpp
 
 HEADERS += \
     vhsm.h \
