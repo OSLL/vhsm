@@ -1,0 +1,61 @@
+MESSAGEHANDLER TESTS
+	In all tests it is verified result of function handle().
+	
+	SESSIONMESSAGEHANDLER:
+	Tests connected with handling session messages.		
+		STARTHANDLER:
+			- Success start session test. Checked that value of handle().error_code() == ERR_NO_ERROR.
+		ENDHANDLER:
+			- Success end session test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to end not opened session. Checked that value of  handle().error_code() == ERR_BAD_SESSION.
+		LOGINHANDLER:
+			- Success login test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Login failed test. Checked that value of  handle().error_code() == ERR_BAD_CREDENTIALS.
+		LOGOUTHANDLER:
+			- Success logout test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Logout failed test. Checked that value of  handle().error_code() == ERR_BAD_SESSION.
+			
+	MACMESSAGEHANDLER:
+	Tests connected with handling mac messages.		
+		INITHANDLER:
+			- Success mac init test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+		UPDATEHANDLER:
+			- Success mac updating test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to update mac without init. Checked that value of  handle().error_code() == ERR_MAC_NOT_INITIALIZED.
+		GETMACSIZEHANDLER
+			- Success getting mac size failed test. Checked that value of handle().error_code() == ERR_NO_ERROR.
+			- Trying to get mac size without init. Checked that value of handle().error_code() == ERR_MAC_NOT_INITIALIZED.
+		ENDHANDLER
+			- Success mac ending test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to end mac without init. Checked that value of handle().error_code() == ERR_MAC_NOT_INITIALIZED.
+			
+	DIGESTMESSAGEHANDLER:
+	Tests connected with handling digest messages.
+		INITHANDLER:
+			- Success digest init test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+		UPDATEHANDLER:
+			- Success digest updating test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to digest update without init. Checked that value of  handle().error_code() == ERR_DIGEST_NOT_INITIALIZED.
+		UPDATEKEYHANDLER:
+			- Success digest key updating test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to update digest key without init. Checked that value of  handle().error_code() == ERR_DIGEST_NOT_INITIALIZED.
+		GETDIGESTSIZEHANDLER:
+			- Succes getting digest size failed test. Checked that value of handle().error_code() == ERR_NO_ERROR.
+			- Trying to get digest size without init. Checked that value of handle().error_code() == ERR_DIGEST_NOT_INITIALIZED.
+		ENDHANDLER:
+			- Success digest ending test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to end digest without init. Checked that value of handle().error_code() == ERR_DIGEST_NOT_INITIALIZED.
+			
+	KEYMGMTMESSAGEHANDLER:
+	Tests connected with handling key management messages.
+		CREATEKEY:
+			- Success creating key test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+			- Trying to add two keys with equal ids. Checked that value of  handle().error_code() == ERR_KEY_ID_OCCUPIED.
+		DELETEKEY:
+			- Success deleting key test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+		GETKEYIDS:
+			- Success getting key ids test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+		GETKEYIDSCOUNT:
+			- Success getting count of key ids test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
+		GETKEYINFO:
+			- Success getting key info test. Checked that value of  handle().error_code() == ERR_NO_ERROR.
