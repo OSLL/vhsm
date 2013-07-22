@@ -2,7 +2,10 @@ CC = g++ -I../client/vhsm_api_prototype
 API_LIB = ../client/vhsm_api_prototype_impl/vhsm_api.a
 LIBS = -lprotobuf -lpthread
 
-all: utils test_digest test_create_key test_hmac test_gen_keys test_enum_keys unit_test
+all: build_unit_tests utils test_digest test_create_key test_hmac test_gen_keys test_enum_keys unit_test
+
+build_unit_tests: 
+	$(MAKE) -C unit_tests
 
 utils: utils.h utils.cpp
 	$(CC) -c utils.cpp
@@ -26,5 +29,6 @@ unit_test:
 	$(MAKE) -C unit_tests
 
 clean:
+	$(MAKE) -C unit_tests clean
 	rm *~ *.out *.o test_digest test_create_key test_hmac test_gen_keys test_enum_keys -f
 	$(MAKE) -C unit_tests clean

@@ -40,6 +40,12 @@ echo -e "RUN TESTS"
 cd $TESTS
 ./run_tests.sh
 
+echo -e "RUN UNIT TESTS"
+cd unit_tests
+./vhsm_tests
+./storage_tests
+./mh_tests
+
 echo -e "STOPPING VHSM"
 
 killall vhsm
