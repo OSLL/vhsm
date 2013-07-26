@@ -19,46 +19,7 @@ typedef std::map<SessionId, Digest_CTX*> DigestContextMap;
 
 //------------------------------------------------------------------------------
 
-class VHSM;
-
-class VhsmMessageHandler {
-    typedef std::map<int, VhsmMessageHandler*> HandlerMap;
-
-public:
-    VhsmMessageHandler();
-    virtual ~VhsmMessageHandler();
-
-    virtual VhsmResponse handle(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss);
-
-private:
-    virtual int getMessageType(const VhsmMessage &msg) const = 0;
-    virtual bool preprocess(VHSM &vhsm, const VhsmMessage &msg, const ClientId &id, const VhsmSession &uss, VhsmResponse &r) const;
-
-protected:
-    HandlerMap handlers;
-};
-
-//------------------------------------------------------------------------------
-
-/*
-class VhsmStorage {
-public:
-    VhsmStorage();
-    ~VhsmStorage();
-
-    bool hasUser(const VhsmUser &user) const;
-    PKeyType getUserPrivateKey(const VhsmUser &user, const std::string &keyId) const;
-
-    ErrorCode createKey(const VhsmUser &user, const std::string &keyId, const std::string &keyData);
-    ErrorCode deleteKey(const VhsmUser &user, const std::string &keyId);
-    std::vector<std::string> getKeyIds(const VhsmUser &user) const;
-
-private:
-    ES::EncryptedStorage *storage;
-};
-*/
-
-//------------------------------------------------------------------------------
+class VhsmMessageHandler;
 
 class VHSM {
 public:

@@ -54,7 +54,7 @@ static inline bool ec2bool(const ErrorCode &ec) {
 /**********************************************************************************/
 
 VhsmStorage::VhsmStorage(const std::string &storageRoot) : dbPath(storageRoot), kdb(0) {
-    if(dbPath.empty() || dbPath.at(dbPath.size() - 1) != '/') dbPath.push_back('/');
+    if(!dbPath.empty() && dbPath.at(dbPath.size() - 1) != '/') dbPath.push_back('/');
     dbPath += "keys.db";
 
     sqlite3_open(dbPath.c_str(), &kdb);
@@ -179,6 +179,7 @@ void VhsmStorage::logoutUser(const VhsmUser &user) {
 
 ErrorCode VhsmStorage::createUser(const std::string &name, const std::string &password) {
     if(!kdb) return ERR_VHSM_ERROR;
+    if(hasUser(name)) return ERR_BAD_ARGUMENTS;
 
     PKDFInfo info = generatePKDFOptions(0);
     std::string key = getDerivedKey(info, password);
@@ -251,7 +252,7 @@ ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, c
 //------------------------------------------------------------------------------
 
 ErrorCode VhsmStorage::deleteKey(const VhsmUser &user, const std::string &keyID) {
-    ErrorCode result = ERR_BAD_CREDENTIALS;
+    ErrorCode result = ERR_KEY_NOT_FOUND;
     UserKeyMap::iterator i = activeUsers.find(user.name);
     if(i == activeUsers.end()) return ERR_NOT_AUTHORIZED;
     int userID = i->second.first;
@@ -506,38 +507,26 @@ bool VhsmStorage::decrypt(const std::string &data, const std::string &key, std::
 
 //------------------------------------------------------------------------------
 
-/*
-bool VhsmStorage::initKeyDatabase(const std::string &path) const {
-    bool result = false;
-    sqlite3 *kdb = 0;
-    sqlite3_stmt *query = 0;
+bool VhsmStorage::hasUser(const std::string &username) const {
+    sqlite3_reset(getUserQuery);
+    sqlite3_clear_bindings(getUserQuery);
+    sqlite3_bind_text(getUserQuery, 1, username.c_str(), username.size(), SQLITE_STATIC);
 
-    if(sqlite3_open(path.c_str(), &kdb) != SQLITE_OK) goto cleanup;
-
-    static const std::string qtext = "CREATE TABLE Keys (KeyID CHAR(32) not null,"
-            "Key BLOB not null,"
-            "Purpose INT4 not null,"
-            "ImportDate DATETIME not null,"
-            "CONSTRAINT PK_KEYS primary key (KeyID)"
-            ");"
-            "CREATE UNIQUE INDEX Keys_PK on Keys (KeyID);";
-
-    sqlite3_prepare_v2(kdb, qtext.c_str(), qtext.size(), &query, NULL);
-
-    if(sqlite3_step(query) != SQLITE_DONE) {
-        std::cerr << "SQL Error: " << sqlite3_errmsg(kdb) << std::endl;
-        goto cleanup;
+    bool result = true;
+    int qres = sqlite3_step(getUserQuery);
+    switch(qres) {
+    case SQLITE_ROW:
+        result = true;
+        break;
+    case SQLITE_DONE:
+        result = false;
+        break;
+    default:
+        std::cerr << "Unexpected query result on \'hasKeyID\': " << qres << " | " << sqlite3_errmsg(kdb) << std::endl;
     }
 
-    result = true;
-
-cleanup:
-    sqlite3_finalize(query);
-    sqlite3_close(kdb);
-    if(!result) FSUtils::removeFile(path);
     return result;
 }
-*/
 
 bool VhsmStorage::hasKeyId(const std::string &keyID, int userID) const {
     sqlite3_bind_text(hasKeyIdQuery, 1, keyID.c_str(), keyID.size(), SQLITE_STATIC);

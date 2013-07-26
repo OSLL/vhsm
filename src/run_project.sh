@@ -5,8 +5,8 @@ if [ `id -u` -ne 0 ]; then
 fi
 
 TESTS=$PWD"/test"
-VHSM_CNT_DIR="/var/lib/vz/private/411"
-VHSM_CNT=411
+VHSM_CNT=412
+VHSM_CNT_DIR="/var/lib/vz/private/"$VHSM_CNT
 
 not_exists() {
     which "$1" &>/dev/null
@@ -31,10 +31,10 @@ fi
 echo -e "CREATING CONTAINER"
 
 vzctl create $VHSM_CNT --ostemplate debian-6.0-x86_64
-vzctl set $VHSM_CNT --ipadd 192.168.5.1 --save
+#vzctl set $VHSM_CNT --ipadd 192.168.5.1 --save
 vzctl start $VHSM_CNT
 
-CONTAINER_LIB=/var/lib/vz/private/411/usr/lib
+CONTAINER_LIB=/var/lib/vz/private/"$VHSM_CNT"/usr/lib/"
 
 if [ ! -d "$CONTAINER_LIB" ]; then
 	echo "Could not find $CONTAINER_LIB directory. Try to recreate conatainer with id $VHSM_CNT."
@@ -65,6 +65,12 @@ sleep 5
 echo -e "RUN TESTS"
 cd $TESTS
 ./run_tests.sh
+
+echo -e "RUN UNIT TESTS"
+cd unit_tests
+./vhsm_tests
+./storage_tests
+./mh_tests
 
 echo -e "STOPPING VHSM"
 

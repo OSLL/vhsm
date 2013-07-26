@@ -28,6 +28,6 @@ cp "vhsm/vhsm_admin" $TEST_DIR
 #cp "client/openssl_vhsm_engine/test_engine.so" $CLIENT_DIR
 #cp "client/openssl_vhsm_engine/e_test_app" $CLIENT_DIR
 
-echo -e "MAKE NETLINK MODULE"
+echo -e "MAKING NETLINK MODULE"
 cd ./netlink_transport/kernel/
 make

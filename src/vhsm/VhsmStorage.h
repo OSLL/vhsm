@@ -78,6 +78,7 @@ private:
 
 //    bool initKeyDatabase(const std::string &path) const;
     bool hasKeyId(const std::string &keyID, int userID) const;
+    bool hasUser(const std::string &username) const;
     bool insertKey(const std::string &keyID, int userID, const std::string &key, int purpose);
 
     //------------------------------------------------------------------------------
