@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <vhsm_transport.pb.h>
+#include "vhsm_transport.pb.h"
 
 #include "VhsmMessageTransport.h"
 
