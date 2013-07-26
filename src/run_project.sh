@@ -26,6 +26,14 @@ if not_exists vzctl ; then
 	abort "vzctl not found. Please try to install vzctl"
 fi
 
+if [ ! -f ./netlink_transport/kernel/vhsm_transport.ko ]; then
+	abort "vhsm_transport.ko not found. Please build project."
+fi
+
+if [ ! -f ./vhsm/vhsm_admin ]; then
+	abort "./vhsm/vhsm_admin not found. Please build project."
+fi
+
 if [[ `vzlist | grep $VHSM_CNT` ]]; then
   vzctl stop $VHSM_CNT
   vzctl delete $VHSM_CNT
@@ -37,7 +45,7 @@ vzctl create $VHSM_CNT --ostemplate debian-6.0-x86_64
 #vzctl set $VHSM_CNT --ipadd 192.168.5.1 --save
 vzctl start $VHSM_CNT
 
-CONTAINER_LIB=/var/lib/vz/private/"$VHSM_CNT"/usr/lib/"
+CONTAINER_LIB=/var/lib/vz/private/"$VHSM_CNT"/usr/lib/
 
 if [ ! -d "$CONTAINER_LIB" ]; then
 	abort "Could not find $CONTAINER_LIB directory. Try to recreate conatainer with id $VHSM_CNT."
