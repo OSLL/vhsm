@@ -1,0 +1,13 @@
+#!/bin/sh
+
+VHSM_CNT_DIR=$(cat "/etc/vhsm/vhsm.conf")
+
+sed "/\/vhsm/d" $VHSM_CNT_DIR"/etc/rc.local" >> /tmp/vhsm.temp
+mv /tmp/vhsm.temp $VHSM_CNT_DIR"/etc/rc.local"
+
+sed "/vhsm_transport/d" /etc/modules >> /tmp/vhsm.temp
+mv /tmp/vhsm.temp /etc/modules
+
+killall vhsm
+rmmod vhsm_transport
+rm -rf /etc/vhsm
