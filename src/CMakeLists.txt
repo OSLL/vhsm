@@ -76,7 +76,7 @@ if(BUILD_transport_module)
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/netlink_transport/kernel
 	)
 	add_dependencies(VhsmMessageTransport transport_module)
-	install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION bin/kernel)
+	install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION ../lib/modules/2.6.32-5-openvz-amd64/kernel/crypto/)
 endif(BUILD_transport_module)
 
 if(BUILD_vhsm)
@@ -89,5 +89,16 @@ if(BUILD_tests)
 endif(BUILD_tests)
 
 # ------------------------------------------------------------------------
+SET (CPACK_GENERATOR "DEB")
 
+SET (CPACK_DEBIAN_PACKAGE_VERSION "0.1")
+SET (CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+SET (CPACK_DEBIAN_PACKAGE_SECTION "utils")
+SET (CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+SET (CPACK_DEBIAN_PACKAGE_DEPENDS "libcrypto++8, libprotobuf6, vzctl")
+SET (CPACK_PACKAGE_DESCRIPTION_SUMMARY "virtual HSM\n Virtual HSM is software package desigend to store secret data and compute cryptographic functions using the secrets out of virtual environment.")
+SET (CPACK_PACKAGE_CONTACT "virtual-hsm team <virtual-hsm@lists.osll.spb.ru>")
+SET (CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_DEBIAN_PACKAGE_VERSION}_${CPACK_DEBIAN_ARCHITECTURE}")
+SET (CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/DEBIAN/postinst" "${CMAKE_SOURCE_DIR}/DEBIAN/prerm")
 
+INCLUDE (CPack)
