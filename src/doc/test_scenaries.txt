@@ -1,0 +1,225 @@
+Тест 0: Установка
+  Используемые функции приложения:
+    vzctl
+    vhsm_admin: init_root;
+    Storage:    initDatabase;
+  Тесты:
+    - попытка установки при неудовлетворенных зависимостях - неудача;
+    - создание контейнера с занятым id - инициализация vhsm;
+    - создание контейнера со свободным id - создание контейнера и инициализация vhsm;
+  
+Тест 1: Инициализация контейнера
+  Используемые функции:
+    vhsm_admin: init_root;
+    Storage:    initDatabase;
+  Тесты:
+    - создание Хранилища в пустом файле - успех;
+	  - создание Хранилища по несуществующему пути - неудача;
+	    
+Тест 2: Создание пользователя
+  Используемые функции:
+    vhsm_admin: create_user;
+    Storage:    createUser;
+  Тесты:
+    - создание нового пользователя - успех;
+	  - создание пользователя с занятым именем - неудача;
+	  - создание еще одного пользователя - успех;
+
+Тест 3: Вход и выход из системы
+  Используемые функции: 
+    client api: vhsm_start_session;
+                vhsm_login;
+                vhsm_logout;
+                vhsm_end_session;
+    transport api:  vhsm_tr_start_session; 
+                    send_message;
+                    vhsm_tr_end_session;
+                    vhsm_tr_login;
+                    vhsm_tr_logout;
+    MessageHandler: SessionMessageHandler::StartHandler;
+                    SessionMessageHandler::LoginHandler; 
+                    SessionMessageHandler::LogoutHandler;
+                    SessionMessageHandler::EndHandler;
+    VHSM: openSession;
+          loginUser;
+          logoutUser;
+          closeSession;
+    Storage:  loginUser;
+              logoutUser;
+  Тесты:
+    - первичная регистрация пользователя - успех;
+	  - двойная регистрация пользователя - отказ в регистрации;
+	  - завершение сеанса - успех;
+	  - двойное завершение сеанса - неудача;
+	  - закрытие сессии - успех;
+	  - двойное закрытие сессии - неудача;
+	  - повторная регистрация - успех;
+	  - повторное закрытие сессии - успех;
+	  - проверка регистриации в завершенном сеансе - неудача;
+	  
+Тест 4: Операции с ключами
+  Используемые функции: 
+    client api: vhsm_start_session;
+                vhsm_login;
+                vhsm_key_mgmt_generate_key;
+                vhsm_key_mgmt_create_key;
+                vhsm_key_mgmt_delete_key;
+                vhsm_key_mgmt_get_key_ids;
+                vhsm_key_mgmt_get_key_info;
+                vhsm_logout;
+                vhsm_end_session;
+    transport api:  vhsm_tr_start_session;
+                    send_message;
+                    vhsm_tr_login;
+                    vhsm_tr_key_mgmt_import_key;
+                    vhsm_tr_key_mgmt_delete_key;
+                    vhsm_tr_key_mgmt_get_key_ids;
+                    vhsm_tr_key_mgmt_get_key_ids_count;
+                    vhsm_tr_key_mgmt_get_key_info;
+                    vhsm_tr_logout;
+                    vhsm_tr_end_session;
+    MessageHandler: SessionMessageHandler::StartHandler; 
+                    SessionMessageHandler::LoginHandler;
+                    KeyMgmtMessageHandler::CreateKey;
+                    KeyMgmtMessageHandler::DeleteKey;
+                    KeyMgmtMessageHandler::GetKeyIds;
+                    KeyMgmtMessageHandler::GetKeyIdsCount;
+                    KeyMgmtMessageHandler::GetKeyInfo;
+                    SessionMessageHandler::LogoutHandler;
+                    SessionMessageHandler::EndHandler;
+    VHSM: openSession;
+          loginUser, 
+          importKey;
+	        deleteKey;
+	        getKeyIdsCount;
+	        getKeyIds;
+	        getKeyInfo;
+          logoutUser;
+          closeSession;
+    Storage:  loginUser;
+              importKey;
+              deleteKey;
+              getUserPrivateKey;
+              getKeyIdsCount;
+              getKeyIds;
+              getKeyInfo;
+              logoutUser;
+  Тесты:
+    - регистрация пользователя - успех;
+    - генерация ключа - успех
+	  - импорт ключа с заданным id - успех;
+	  - импорт ключа с занятым id - неудача;
+	  - импорт ключа незарегистрированным пользователем - неудача;
+	  - генерация ключа и id - успех;
+	  - проверка количества ключей - успех;
+    - удаление ключа с заданным id - успех;
+	  - удаление ключа с несуществующим id - неудача;
+	  - проверка количества ключей в БД после удаления ключа - успех;
+	  - удаление ключа незарегистрированным пользователем - неудача;
+    - импорт ключа и генерация id - успех;
+	  - извлечение ключа с заданным id - успех;
+	  - проверка извлеченного ключа - успех;
+	  - извлечение ключа незарегистрированным пользователем - неудача;
+	  - извлечение ключа с несуществующим id - неудача;
+	  - проверка количества ключей в БД - успех;
+	  - вызов функции незарегистрированным пользователем - неудача;
+	  - проверка id, возвращенных функцией - успех;
+	  - вызов функции незарегистрированным пользователем - неудача;
+	  - проверка информации о ключах, возвращенной функцией - успех;
+	  - вызов функции незарегистрированным пользователем - неудача;
+    - закрытие сессии - успех;
+    
+Тест 5: DIGEST SHA1
+  Используемые функции: 
+    client api: vhsm_start_session;
+                vhsm_login;
+                vhsm_digest_init;
+                vhsm_digest_update;
+                vhsm_digest_key;
+                vhsm_digest_end;
+                vhsm_logout;
+                vhsm_end_session;
+    transport api:  vhsm_tr_start_session; 
+                    send_message;
+                    vhsm_tr_login;
+                    vhsm_tr_digest_init_sha1;
+                    vhsm_tr_digest_update;
+                    vhsm_tr_digest_key;
+                    vhsm_tr_digest_end;
+                    vhsm_tr_end_session;                    
+                    vhsm_tr_logout;
+    MessageHandler: SessionMessageHandler::StartHandler;
+                    SessionMessageHandler::LoginHandler; 
+                    DigestMessageHandler::InitHandler;
+                    DigestMessageHandler::UpdateHandler;
+                    DigestMessageHandler::UpdateKeyHandler;
+                    DigestMessageHandler::EndHandler;
+                    SessionMessageHandler::LogoutHandler;
+                    SessionMessageHandler::EndHandler;
+    VHSM: openSession;
+          loginUser;
+          digestInit;
+          digestUpdate;
+          digestFinal;
+          logoutUser;
+          closeSession;
+    Storage:  loginUser;
+              logoutUser;
+  Тесты:
+    - регистрация пользователя - успех;
+	  - вызов digest_init - успех;
+	  - вызов digest_init для неподдерживаемого метода - неудача;
+	  - вызов digest_update - успех;
+	  - вызов digest_update для несуществующей сессии - неудача;
+	  - вызов digest_end - успех;
+	  - повторный вызов digest_end - неудача;
+	  - проверка хеша - успех;
+	  - закрытие сессии - успех;
+	
+Тест 6: HMAC алгоритм
+  Используемые функции: 
+    client api: vhsm_start_session;
+                vhsm_login;
+                vhsm_mac_init;
+                vhsm_mac_update;
+                vhsm_mac_end;
+                vhsm_logout;
+                vhsm_end_session;
+    transport api:  vhsm_tr_start_session; 
+                    send_message;
+                    vhsm_tr_login;
+                    vhsm_tr_mac_init_hmac_sha1;
+                    vhsm_tr_mac_update;
+                    vhsm_tr_mac_get_size;
+                    vhsm_tr_mac_end;
+                    vhsm_tr_end_session;
+                    vhsm_tr_logout;
+    MessageHandler: SessionMessageHandler::StartHandler;
+                    SessionMessageHandler::LoginHandler; 
+                    MacMessageHandler::InitHandler;
+                    MacMessageHandler::UpdateHandler;
+                    MacMessageHandler::GetMacSizeHandler;
+                    MacMessageHandler::EndHandler;
+                    SessionMessageHandler::LogoutHandler;
+                    SessionMessageHandler::EndHandler;
+    VHSM: openSession;
+          loginUser;
+          macInit;
+          macUpdate;
+          macGetSize;
+          macFinal;
+          logoutUser;
+          closeSession;
+    Storage:  loginUser;
+              getUserPrivateKey;
+              logoutUser;
+  Тесты:
+    - регистрация пользователя - успех;
+	  - вызов mac_init - успех;
+	  - вызов mac_init для неподдерживаемого метода - неудача;
+	  - вызов mac_update - успех;
+	  - вызов mac_update для несуществующей сессии - неудача;
+	  - вызов mac_end - успех;
+	  - повторный вызов mac_end - неудача;
+	  - проверка подписи - успех;
+	  - закрытие сессии - успех;
