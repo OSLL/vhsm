@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include <vector>
+#include <map>
 
 #include <sqlite3.h>
 

@@ -49,7 +49,7 @@ void VhsmStorageTest::testLogin() {
      VhsmStorage storage("./");
 
      CPPUNIT_ASSERT_MESSAGE("login failed", storage.loginUser(VhsmUser("user_1", "password")));
-     CPPUNIT_ASSERT_MESSAGE("double login", !storage.loginUser(VhsmUser("user_1", "password")));
+     CPPUNIT_ASSERT_MESSAGE("double login failed", storage.loginUser(VhsmUser("user_1", "password")));
      CPPUNIT_ASSERT_MESSAGE("invalid user logged in", !storage.loginUser(VhsmUser("user_3", "")));
      CPPUNIT_ASSERT_MESSAGE("invalid password accepted", !storage.loginUser(VhsmUser("user_2", "")));
      CPPUNIT_ASSERT_MESSAGE("login failed", storage.loginUser(VhsmUser("user_2", "password")));

@@ -15,12 +15,15 @@ void VhsmTest::testLogin() {
     std::string password = "password";
 
     VhsmSession s = vhsm.openSession(cid);
+    VhsmSession s2 = vhsm.openSession(cid);
     CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm.loginUser(user, password, s.sid()));
-    CPPUNIT_ASSERT_MESSAGE("double login", !vhsm.loginUser(user, password, s.sid()));
+    CPPUNIT_ASSERT_MESSAGE("double login in one session", !vhsm.loginUser(user, password, s.sid()));
+    CPPUNIT_ASSERT_MESSAGE("double login in different sessions failed", vhsm.loginUser(user, password, s2.sid()));
     CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm.logoutUser(s.sid()));
     CPPUNIT_ASSERT_MESSAGE("double logout", !vhsm.logoutUser(s.sid()));
     CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm.closeSession(cid, s));
     CPPUNIT_ASSERT_MESSAGE("double close session", !vhsm.closeSession(cid, s));
+    CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm.closeSession(cid, s2));
 
     s = vhsm.openSession(cid);
     CPPUNIT_ASSERT_MESSAGE("second login user failed", vhsm.loginUser(user, password, s.sid()));

@@ -50,7 +50,7 @@ VhsmSession VHSM::openSession(const ClientId &id) {
         std::set<SessionId> ss; ss.insert(sid);
         clientSessions.insert(std::make_pair(id, ss));
     } else {
-        cs->second.insert(sid);
+        if(!cs->second.insert(sid).second) std::cerr << "Unable to add sid " << sid << " for client " << id.veid << ":" << id.pid << std::endl;
     }
 
     return s;
@@ -59,6 +59,8 @@ VhsmSession VHSM::openSession(const ClientId &id) {
 bool VHSM::closeSession(const ClientId &id, const VhsmSession &s) {
     ClientSessionMap::iterator cs = clientSessions.find(id);
     if(cs == clientSessions.end()) return false;
+    std::set<SessionId>::iterator ss = cs->second.find(s.sid());
+    if(ss == cs->second.end()) return false;
 
     HMACContextMap::iterator hi = clientHmacContexts.find(s.sid());
     if(hi != clientHmacContexts.end()) {

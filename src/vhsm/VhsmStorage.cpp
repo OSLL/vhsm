@@ -151,6 +151,8 @@ bool VhsmStorage::initDatabase() {
 bool VhsmStorage::loginUser(const VhsmUser &user) {
     if(!kdb) return false;
 
+    if(activeUsers.find(user.name) != activeUsers.end()) return true;
+
     sqlite3_reset(getUserQuery);
     sqlite3_clear_bindings(getUserQuery);
     sqlite3_bind_text(getUserQuery, 1, user.name.c_str(), user.name.size(), NULL);
