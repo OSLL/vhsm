@@ -73,13 +73,13 @@ ErrorCode VhsmStorage::createUser(const std::string &name, const std::string &pa
     return ERR_NO_ERROR;
 }
 
-ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose, bool nokeygen) {
+ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose, size_t length, bool nokeygen) {
     return ERR_NO_ERROR;
 }
 
-ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose, bool nokeygen) {
+ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose, size_t length, bool nokeygen) {
     std::string copyKeyID(keyID);
-    return importKey(user, key, copyKeyID, purpose, nokeygen);
+    return importKey(user, key, copyKeyID, purpose, length, nokeygen);
 }
 
 ErrorCode VhsmStorage::deleteKey(const VhsmUser &user, const std::string &keyID) {

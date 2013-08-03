@@ -181,6 +181,7 @@ message VhsmKeyMgmtMessage {
     optional VhsmKey key = 2;
     required sint32 purpose = 3;
     required bool force_import = 4;
+    required sint32 key_length = 5;
   }
 
   message GetKeyInfo {

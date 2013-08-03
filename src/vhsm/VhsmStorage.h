@@ -32,8 +32,8 @@ public:
 
     bool initDatabase();
     ErrorCode createUser(const std::string &name, const std::string &password);
-    ErrorCode importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose = 0, bool nokeygen = false);
-    ErrorCode importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose = 0, bool nokeygen = false);
+    ErrorCode importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose = 0, size_t length = USER_KEY_LENGTH, bool nokeygen = false);
+    ErrorCode importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose = 0, size_t length = USER_KEY_LENGTH, bool nokeygen = false);
     ErrorCode deleteKey(const VhsmUser &user, const std::string &keyID);
     ErrorCode getUserPrivateKey(const VhsmUser &user, const std::string &keyID, std::string &pkey) const;
     int getKeyIdsCount(const VhsmUser &user) const;

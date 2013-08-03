@@ -234,7 +234,7 @@ ErrorCode VHSM::digestFinal(const SessionId &sid, std::vector<char> &ds) {
 
 //------------------------------------------------------------------------------
 
-ErrorCode VHSM::importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, bool forceImport) {
+ErrorCode VHSM::importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, size_t length, bool forceImport) {
     static std::set<std::string> keyIds;
     UserMap::iterator i = users.find(sid);
     if(i == users.end()) return ERR_NOT_AUTHORIZED;

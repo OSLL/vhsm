@@ -207,7 +207,7 @@ VhsmResponse KeyMgmtMessageHandler::CreateKey::handle(VHSM &vhsm, const VhsmMess
     const VhsmKeyMgmtMessage_CreateKey &m = msg.key_mgmt_message().create_key_message();
     std::string keyID = m.key_id().id().c_str();
     std::string key = m.has_key() ? m.key().key() : "";
-    ErrorCode res = vhsm.importKey(uss.sid(), keyID, key, m.purpose(), m.force_import());
+    ErrorCode res = vhsm.importKey(uss.sid(), keyID, key, m.purpose(), m.key_length(), m.force_import());
     res == ERR_NO_ERROR ? rawResponse(r, keyID.c_str(), keyID.size() + 1) : errorResponse(r, res);
     return r;
 }

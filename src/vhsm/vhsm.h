@@ -47,7 +47,7 @@ public:
     ErrorCode digestGetSize(const SessionId &sid, unsigned int *size) const;
     ErrorCode digestFinal(const SessionId &sid, std::vector<char> &ds);
 
-    ErrorCode importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, bool forceImport);
+    ErrorCode importKey(const SessionId &sid, std::string &keyId, const std::string &keyData, int purpose, size_t length, bool forceImport);
     ErrorCode deleteKey(const SessionId &sid, const std::string &keyId);
     int getKeyIdsCount(const SessionId &sid) const;
     std::vector<std::string> getKeyIds(const SessionId &sid) const;

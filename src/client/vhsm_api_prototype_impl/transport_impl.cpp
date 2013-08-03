@@ -435,7 +435,7 @@ vhsm_rv vhsm_tr_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id) {
   return send_message_ok_response(message, response);
 }
 
-vhsm_rv vhsm_tr_key_mgmt_import_key(vhsm_session session, vhsm_key key, int purpose, bool force_import, vhsm_key_id *key_id) {
+vhsm_rv vhsm_tr_key_mgmt_import_key(vhsm_session session, vhsm_key key, int purpose, bool force_import, vhsm_key_id *key_id, unsigned int key_length) {
   VhsmMessage message = create_key_management_message(VhsmKeyMgmtMessage::CREATE_KEY, session);
   VhsmResponse response;
   
@@ -455,6 +455,9 @@ vhsm_rv vhsm_tr_key_mgmt_import_key(vhsm_session session, vhsm_key key, int purp
   message.mutable_key_mgmt_message()->
           mutable_create_key_message()->
           set_force_import(force_import);
+  message.mutable_key_mgmt_message()->
+          mutable_create_key_message()->
+          set_key_length(key_length);
   
   return send_message_raw_data_response(message, response, key_id->id, sizeof(key_id->id));
 }

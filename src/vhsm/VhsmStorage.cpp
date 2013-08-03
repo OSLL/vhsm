@@ -14,6 +14,8 @@
 #include <crypto++/gcm.h>
 #include <crypto++/base64.h>
 
+#define MAX_USER_KEY_LENGTH 3072
+
 bool FSUtils::getStat(const std::string &path, struct stat *s) {
     return stat(path.c_str(), s) == 0;
 }
@@ -207,7 +209,7 @@ ErrorCode VhsmStorage::createUser(const std::string &name, const std::string &pa
 
 //------------------------------------------------------------------------------
 
-ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose, bool nokeygen) {
+ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, std::string &keyID, int purpose, size_t length, bool nokeygen) {
     if(!kdb) return ERR_VHSM_ERROR;
 
     std::string realKey = key;
@@ -230,7 +232,8 @@ ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, s
     }
 
     if(key.empty() && !nokeygen) {
-        realKey = generateBlock(USER_KEY_LENGTH);
+        if(length > MAX_USER_KEY_LENGTH) return ERR_BAD_ARGUMENTS;
+        realKey = generateBlock(length);
         //        } else if(key.size() != USER_KEY_LENGTH) {
         //            std::cerr << "Bad key specified" << std::endl;
         //            goto cleanup;
@@ -246,9 +249,9 @@ ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, s
     return result;
 }
 
-ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose, bool nokeygen) {
+ErrorCode VhsmStorage::importKey(const VhsmUser &user, const std::string &key, const std::string &keyID, int purpose, size_t length, bool nokeygen) {
     std::string copyKeyID(keyID);
-    return importKey(user, key, copyKeyID, purpose, nokeygen);
+    return importKey(user, key, copyKeyID, purpose, length, nokeygen);
 }
 
 //------------------------------------------------------------------------------
@@ -579,7 +582,7 @@ bool VhsmStorage::insertKey(const std::string &keyID, int userID, const std::str
 //------------------------------------------------------------------------------
 
 VhsmStorage::PKDFInfo VhsmStorage::generatePKDFOptions(int purpose) const {
-    return PKDFInfo(generateBlock(128), 512, purpose);
+    return PKDFInfo(generateBlock(128), 5000, purpose);
 }
 
 /*

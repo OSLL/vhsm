@@ -105,8 +105,8 @@ void VhsmTest::testKeyMgmt() {
 
     VhsmSession s = vhsm.openSession(cid);
     CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm.loginUser(user, password, s.sid()));
-    CPPUNIT_ASSERT_MESSAGE("authorization check failed", vhsm.importKey(s.sid(), keyID, keyData, 0, true) == ERR_NO_ERROR);
-    CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm.importKey(s.sid() + 1, keyID, keyData, 0, true) == ERR_NOT_AUTHORIZED);
+    CPPUNIT_ASSERT_MESSAGE("authorization check failed", vhsm.importKey(s.sid(), keyID, keyData, 0, 0, true) == ERR_NO_ERROR);
+    CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm.importKey(s.sid() + 1, keyID, keyData, 0, 0, true) == ERR_NOT_AUTHORIZED);
     CPPUNIT_ASSERT_MESSAGE("authorization check failed", vhsm.deleteKey(s.sid(), "") == ERR_NO_ERROR);
     CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm.deleteKey(s.sid() + 1, "") == ERR_NOT_AUTHORIZED);
     CPPUNIT_ASSERT_MESSAGE("authorization check failed", vhsm.getKeyIdsCount(s.sid()) == 1);
