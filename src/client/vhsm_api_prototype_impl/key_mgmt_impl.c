@@ -43,17 +43,21 @@ vhsm_rv vhsm_key_mgmt_delete_key(vhsm_session session, vhsm_key_id key_id) {
 
 // Uploads passed secret object to vhsm. The object is then accessible with passed vhsm_key_id.
 // Can return: VHSM_RV_OK, VHSM_RV_BAD_SESSION, VHSM_RV_NOT_AUTHORIZED, VHSM_RV_KEY_ID_OCCUPIED
-vhsm_rv vhsm_key_mgmt_create_key(vhsm_session session, vhsm_key key) {
+vhsm_rv vhsm_key_mgmt_create_key(vhsm_session session, vhsm_key key, int purpose) {
     vhsm_key_id key_id;
-    return vhsm_tr_key_mgmt_import_key(session, key, 0, true, &key_id);
+    return vhsm_tr_key_mgmt_import_key(session, key, purpose, true, &key_id);
 }
 
-vhsm_rv vhsm_key_mgmt_generate_key(vhsm_session session, vhsm_key_id *key_id) {
+vhsm_rv vhsm_key_mgmt_create_key(vhsm_session session, vhsm_key key, vhsm_key_id *key_id, int purpose) {
+    return vhsm_tr_key_mgmt_import_key(session, key, purpose, true, key_id);
+}
+
+vhsm_rv vhsm_key_mgmt_generate_key(vhsm_session session, vhsm_key_id *key_id, unsigned int key_length, int purpose) {
     vhsm_key key;
     key.key_data = NULL;
     key.data_size = 0;
     memcpy(key.id.id, key_id->id, sizeof(key_id->id));
-    return vhsm_tr_key_mgmt_import_key(session, key, 0, false, key_id);
+    return vhsm_tr_key_mgmt_import_key(session, key, purpose, false, key_id);
 }
 
 vhsm_rv vhsm_key_mgmt_get_key_info(vhsm_session session, vhsm_key_info *keys, unsigned int *keys_count_ptr) {

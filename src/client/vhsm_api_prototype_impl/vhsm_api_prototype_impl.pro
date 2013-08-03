@@ -21,4 +21,5 @@ INCLUDEPATH += ../../netlink_transport \
         ../
 
 HEADERS += \
-    transport.h
+    transport.h \
+    ../vhsm_api_prototype/key_mgmt.h

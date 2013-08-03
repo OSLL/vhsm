@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(vhsm)
 
 add_subdirectory(vhsm_api_prototype_impl)
+add_subdirectory(vhsm_admin)
 
 install(FILES vhsm_api_prototype/common.h
 	vhsm_api_prototype/digest.h

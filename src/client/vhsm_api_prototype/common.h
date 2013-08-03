@@ -55,6 +55,8 @@ typedef int vhsm_rv;
 // mac_update or mac_end were called prior to mac_init
 #define VHSM_RV_MAC_NOT_INITIALIZED 0x0000000B
 
+#define VHSM_MAX_DATA_LENGTH 3072
+
 //
 // sessions and identification
 //

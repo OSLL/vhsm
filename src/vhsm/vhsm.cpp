@@ -26,7 +26,13 @@ void VHSM::run() {
     ClientId cid;
 
     while(true) {
-        if(!readMessage(msg, cid)) continue;
+        if(!readMessage(msg, cid)) {
+            VhsmResponse response;
+            response.set_type(VhsmResponse::ERROR);
+            response.set_error_code(ERR_VHSM_ERROR);
+            sendResponse(response, cid);
+            continue;
+        }
 
         if(!sendResponse(handleMessage(msg, cid), cid)) {
             std::cerr << "Unable to send response to veid: " << cid.veid << " pid: " << cid.pid << std::endl;
