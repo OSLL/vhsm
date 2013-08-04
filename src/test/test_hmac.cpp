@@ -63,6 +63,7 @@ public:
         CPPUNIT_ASSERT_MESSAGE("unable to delete key", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == VHSM_RV_OK);
         CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
         CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s2) == VHSM_RV_OK);
     }
 
 private:
