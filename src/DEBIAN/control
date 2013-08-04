@@ -2,7 +2,7 @@ Package: vhsm
 Version: 0.1
 Architecture: amd64
 Maintainer: virtual-hsm team <virtual-hsm@lists.osll.spb.ru>
-Depends: libcrypto++8, libprotobuf6, vzctl
+Depends: libcrypto++8, libprotobuf6, vzctl, sqlite3
 Section: utils
 Priority: optional
 Installed-Size: 2457

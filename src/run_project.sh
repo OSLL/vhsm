@@ -61,7 +61,24 @@ echo -e "INITILIZING ENCRYPTED STORAGE\n"
 
 cp "vhsm/vhsm" $VHSM_CNT_DIR
 rm -rf $VHSM_CNT_DIR"/data"
-./vhsm/vhsm_admin i $VHSM_CNT_DIR"/data"
+mkdir $VHSM_CNT_DIR"/data"
+sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create table Users ( 
+            UID                  INTEGER              primary key autoincrement, 
+            Name                 TEXT                 not null, 
+            AuthKey              BLOB                 not null, 
+            Salt                 BLOB                 not null,
+            Iterations           INTEGER              not null )"
+sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create unique index Users_PK on Users (UID)"
+sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create table Keys ( 
+            KeyID                TEXT                 not null, 
+            UID                  INTEGER              not null, 
+            Key                  BLOB                 not null,  
+            Purpose              INTEGER              not null, 
+            ImportDate           DATETIME             not null, 
+            CONSTRAINT Keys_PrimaryKey PRIMARY KEY(KeyID, UID), 
+            CONSTRAINT Keys_ForeignKey FOREIGN KEY(UID) REFERENCES Users(UID) ON DELETE RESTRICT ON UPDATE RESTRICT)"
+sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create unique index Keys_PK on Keys (KeyID)"
+sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create index UserKeys_FK on Keys (UID)"
 ./vhsm/vhsm_admin c $VHSM_CNT_DIR"/data" user password
 
 echo -e "STARTING VHSM"
