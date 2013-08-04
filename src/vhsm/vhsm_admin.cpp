@@ -12,22 +12,24 @@ void show_help() {
     std::cout << "\tc <storage_root> <username> <password> - create user with given username and password" << std::endl;
 }
 
-void create_user(int argc, char ** argv) {
+int create_user(int argc, char ** argv) {
     if (3 != argc) {
         show_help();
-        return;
+        return 1;
     }
 
     VhsmStorage storage(argv[0]);
     if(storage.createUser(argv[1], argv[2])) {
         std::cout << "Unable to create user" << std::endl;
+        return 1;
     }
+    return 0;
 }
 
-void init_root(int argc, char ** argv) {
+int init_root(int argc, char ** argv) {
     if (1 != argc) {
         show_help();
-        return;
+        return 1;
     }
 
     std::string path = argv[0];
@@ -38,7 +40,9 @@ void init_root(int argc, char ** argv) {
     VhsmStorage storage(path);
     if(!storage.initDatabase()) {
         std::cout << "Unable to init database" << std::endl;
+        return 1;
     }
+    return 0;
 }
 
 int main(int argc, char ** argv) {
@@ -49,15 +53,11 @@ int main(int argc, char ** argv) {
 
     switch (argv[1][0]) {
     case 'i':
-        init_root(argc - 2, argv + 2);
-        break;
+        return init_root(argc - 2, argv + 2);
     case 'c':
-        create_user(argc - 2, argv + 2);
-        break;
+        return create_user(argc - 2, argv + 2);
     default :
         show_help();
         return 1;
     }
-
-    return 0;
 }
