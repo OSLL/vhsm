@@ -57,10 +57,10 @@ public:
         CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_end(s2, NULL, &bad_md_size) == VHSM_RV_NOT_AUTHORIZED);
         CPPUNIT_ASSERT_MESSAGE("mac_end failed", vhsm_mac_end(s1, (unsigned char*)md, &md_size) == VHSM_RV_OK);
         CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_mac_end(s1, (unsigned char*)md, &md_size) != VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("wrong essage digest", memcmp(realmd, md, CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE) == 0);
+        CPPUNIT_ASSERT_MESSAGE("wrong message digest", memcmp(realmd, md, CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE) == 0);
 
         //logout
-        CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to delete key", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == VHSM_RV_OK);
         CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
         CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
     }

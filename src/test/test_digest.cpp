@@ -1,63 +1,71 @@
-#include "utils.h"
+#include "vhsm_api_prototype/common.h"
+#include "vhsm_api_prototype/digest.h"
 
-bool test_digest(vhsm_session session) {
-  vhsm_rv rv = VHSM_RV_OK;
-  vhsm_digest_method sha1 = {VHSM_DIGEST_SHA1, (void *)0};
-  unsigned char message[] = "";
-  
-  rv = vhsm_digest_init(session, sha1);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_digest_init() failed" << std::endl;
-    return false;
-  }
-  
-  rv = vhsm_digest_update(session, message, sizeof(message) - 1);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_digest_update() failed" << std::endl;
-    return false;
-  }
-  
-  unsigned int digest_size = 0;
-  
-  rv = vhsm_digest_end(session, 0, &digest_size);
-  if (VHSM_RV_BAD_BUFFER_SIZE != rv) {
-    std::cerr << "vhsm_digest_end(): failed to obtain digest size" << std::endl;
-    return false;
-  }
-  
-  unsigned char *digest = new unsigned char[digest_size + 1];
-  
-  rv = vhsm_digest_end(session, digest, &digest_size);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_digest_end(): failed to obtain digest" << std::endl;
-    return false;
-  }
-  
-  digest[digest_size] = '\0';
-  std::cout << "digest of an empty string is: ";
-  print_bytes(digest, digest_size);
-  std::cout << std::endl;
-  
-  return true;
-}
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TextTestRunner.h>
 
-int main(int argc, char ** argv) {
-  vhsm_session session;
-  
-  
-  if (start_session(session) != VHSM_RV_OK) {
-    return 1;
-  }
-   
-  if (!test_digest(session)) {
-    std::cerr << "test digest failed" << std::endl;
-  } else {
-    std::cerr << "test digest succeeded" << std::endl;
-  }
+#include <crypto++/osrng.h>
+#include <crypto++/sha.h>
 
-  if (close_session(session) != VHSM_RV_OK) {
-    return 1;
-  } 
-  
-  return 0;
+class DigestTest : public CppUnit::TestFixture {
+public:
+    void run() {
+        vhsm_credentials vhsmUser = {"user", "password"};
+        vhsm_session s1, s2;
+
+        vhsm_digest_method digestMethod = {VHSM_DIGEST_SHA1, NULL};
+        vhsm_digest_method badDigestMethod = {0, NULL};
+
+        char msg[VHSM_MAX_DATA_LENGTH];
+        CryptoPP::AutoSeededRandomPool rnd;
+        rnd.GenerateBlock((byte*)msg, VHSM_MAX_DATA_LENGTH);
+
+        char md[CryptoPP::SHA1::DIGESTSIZE];
+        byte realmd[CryptoPP::SHA1::DIGESTSIZE];
+        CryptoPP::SHA1().CalculateDigest((byte*)realmd, (byte*)msg, VHSM_MAX_DATA_LENGTH);
+
+        //login
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == VHSM_RV_OK);
+
+        //init
+        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_digest_init(s1, badDigestMethod) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("digest_init failed", vhsm_digest_init(s1, digestMethod) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_init(s2, digestMethod) != VHSM_RV_OK);
+
+        //update
+        CPPUNIT_ASSERT_MESSAGE("digest_update failed", vhsm_digest_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != VHSM_RV_OK);
+
+        //final
+        unsigned int md_size, bad_md_size;
+        CPPUNIT_ASSERT_MESSAGE("unable to get digest size", vhsm_digest_end(s1, NULL, &md_size) == VHSM_RV_BAD_BUFFER_SIZE);
+        CPPUNIT_ASSERT_MESSAGE("wrong size returned", md_size == CryptoPP::SHA1::DIGESTSIZE);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_end(s2, NULL, &bad_md_size) == VHSM_RV_NOT_AUTHORIZED);
+        CPPUNIT_ASSERT_MESSAGE("digest_end failed", vhsm_digest_end(s1, (unsigned char*)md, &md_size) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("double digest_end", vhsm_digest_end(s1, (unsigned char*)md, &md_size) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("wrong message digest", memcmp(realmd, md, CryptoPP::SHA1::DIGESTSIZE) == 0);
+
+        //logout
+        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
+    }
+
+private:
+    CPPUNIT_TEST_SUITE(DigestTest);
+    CPPUNIT_TEST(run);
+    CPPUNIT_TEST_SUITE_END();
+};
+
+CPPUNIT_TEST_SUITE_REGISTRATION (DigestTest);
+
+int main (int argc, char **argv) {
+    CppUnit::Test *test = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    CppUnit::TextTestRunner runner;
+    runner.addTest(test);
+    runner.run();
+    return 0;
 }
