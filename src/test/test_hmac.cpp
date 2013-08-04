@@ -1,71 +1,82 @@
-#include <mac.h>
-#include "utils.h"
+#include "vhsm_api_prototype/common.h"
+#include "vhsm_api_prototype/digest.h"
+#include "vhsm_api_prototype/mac.h"
+#include "vhsm_api_prototype/key_mgmt.h"
 
-static vhsm_key_id TEST_KEY_ID = {"test_key"};
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TextTestRunner.h>
 
-bool test_hmac(vhsm_session session) {
-  vhsm_rv rv = VHSM_RV_OK;
-  vhsm_digest_method sha1 = {VHSM_DIGEST_SHA1, (void *)0};
-  vhsm_mac_method hmac_sha1 = {VHSM_MAC_HMAC, &sha1, TEST_KEY_ID};
-  unsigned char message[] = "";
-  
-  rv = vhsm_mac_init(session, hmac_sha1);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_mac_init(): failed" << std::endl;
-    return false;
-  }
-  
-  rv = vhsm_mac_update(session, message, sizeof(message) - 1);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_mac_update(): failed" << std::endl;
-  }
-  
-  unsigned int hmac_size = 0;
-  
-  rv = vhsm_mac_end(session, (unsigned char *)0, &hmac_size);
-  if (VHSM_RV_BAD_BUFFER_SIZE != rv) {
-    std::cerr << "vhsm_mac_end(): failed to obtain mac size" << std::endl;
-    return false;
-  }
-  
-  unsigned char * mac = new unsigned char[hmac_size + 1];
-  
-  rv = vhsm_mac_end(session, mac, &hmac_size);
-  if (VHSM_RV_OK != rv) {
-    std::cerr << "vhsm_mac_end(): failed to obtain mac" << std::endl;
-    delete [] mac;
-    return false;
-  }
-  
-  mac[hmac_size] = '\0';
-  
-  std::cout << "hmac-sha1 of an empty string with an empty key is: ";
-  print_bytes(mac, hmac_size);
-  std::cout << std::endl;
-  
-  delete [] mac;
-  
-  return true;
-}
+#include <crypto++/osrng.h>
+#include <crypto++/hmac.h>
+#include <crypto++/sha.h>
 
+class HmacTest : public CppUnit::TestFixture {
+public:
+    void run() {
+        vhsm_credentials vhsmUser = {"user", "password"};
+        vhsm_session s1, s2;
 
-int main(int argc, char ** argv) {
-  vhsm_session session;
-  
-  
-  if (start_session(session) != VHSM_RV_OK) {
-    return 1;
-  }
-   
-  if (!test_hmac(session)) {
-    std::cerr << "test hmac failed" << std::endl;
-  } else {
-    std::cerr << "test hmac succeeded" << std::endl;
-  }
+        char msg[VHSM_MAX_DATA_LENGTH];
+        CryptoPP::AutoSeededRandomPool rnd;
+        rnd.GenerateBlock((byte*)msg, VHSM_MAX_DATA_LENGTH);
 
-  if (close_session(session) != VHSM_RV_OK) {
-    return 1;
-  } 
-  
-  return 0;
+        char md[CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE];
+        char realmd[CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE];
+        CryptoPP::HMAC<CryptoPP::SHA1>((byte*)"abcd", 4).CalculateDigest((byte*)realmd, (byte*)msg, VHSM_MAX_DATA_LENGTH);
+
+        vhsm_key_id vhsmKeyId = {"some_key_id"};
+        vhsm_key vhsmKey = {vhsmKeyId, (void*)"abcd", 4 };
+        vhsm_digest_method sha1 = {VHSM_DIGEST_SHA1, NULL};
+        vhsm_digest_method badDigestMethod = {0, NULL};
+        vhsm_mac_method macMethod = {VHSM_MAC_HMAC, &sha1, vhsmKeyId};
+        vhsm_mac_method badMacMethod1 = {VHSM_MAC_HMAC, &badDigestMethod, vhsmKeyId};
+        vhsm_mac_method badMacMethod2 = {VHSM_MAC_HMAC, &sha1, {"same_key_id"}};
+
+        //login
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("create key failed", vhsm_key_mgmt_create_key(s1, vhsmKey, 0) == VHSM_RV_OK);
+
+        //init
+        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_mac_init(s1, badMacMethod1) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid key id accepted", vhsm_mac_init(s1, badMacMethod2) == VHSM_RV_KEY_NOT_FOUND);
+        CPPUNIT_ASSERT_MESSAGE("mac_init failed", vhsm_mac_init(s1, macMethod) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_init(s2, macMethod) != VHSM_RV_OK);
+
+        //update
+        CPPUNIT_ASSERT_MESSAGE("mac_update failed", vhsm_mac_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != VHSM_RV_OK);
+
+        //final
+        unsigned int md_size, bad_md_size;
+        CPPUNIT_ASSERT_MESSAGE("unable to get mac size", vhsm_mac_end(s1, NULL, &md_size) == VHSM_RV_BAD_BUFFER_SIZE);
+        CPPUNIT_ASSERT_MESSAGE("wrong size returned", md_size == CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_end(s2, NULL, &bad_md_size) == VHSM_RV_NOT_AUTHORIZED);
+        CPPUNIT_ASSERT_MESSAGE("mac_end failed", vhsm_mac_end(s1, (unsigned char*)md, &md_size) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_mac_end(s1, (unsigned char*)md, &md_size) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("wrong essage digest", memcmp(realmd, md, CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE) == 0);
+
+        //logout
+        CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
+    }
+
+private:
+    CPPUNIT_TEST_SUITE(HmacTest);
+    CPPUNIT_TEST(run);
+    CPPUNIT_TEST_SUITE_END();
+};
+
+CPPUNIT_TEST_SUITE_REGISTRATION (HmacTest);
+
+int main (int argc, char **argv) {
+    CppUnit::Test *test = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    CppUnit::TextTestRunner runner;
+    runner.addTest(test);
+    runner.run();
+    return 0;
 }
