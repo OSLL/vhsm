@@ -6,7 +6,7 @@
 static VhsmMessageTransport transport;
 
 static bool send_message(const VhsmMessage &message, VhsmResponse &response) {
-    if(!transport.is_opened()) return false;
+    if(!transport.is_open()) return false;
 
     bool result = false;
     size_t msg_buf_size = message.ByteSize();

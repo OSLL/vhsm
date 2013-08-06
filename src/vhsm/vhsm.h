@@ -17,6 +17,10 @@ typedef CryptoPP::HashTransformation Digest_CTX;
 typedef std::map<SessionId, HMAC_CTX*> HMACContextMap;
 typedef std::map<SessionId, Digest_CTX*> DigestContextMap;
 
+#define VHSM_APP_OK                 0
+#define VHSM_APP_STORAGE_ERROR      1
+#define VHSM_APP_TRANSPORT_ERROR    2
+
 //------------------------------------------------------------------------------
 
 class VhsmMessageHandler;
@@ -26,7 +30,7 @@ public:
     VHSM(const std::string &storageRoot = "./data");
     ~VHSM();
 
-    void run();
+    int run();
 
     VhsmSession openSession(const ClientId &id);
     bool closeSession(const ClientId &id, const VhsmSession &s);
@@ -58,6 +62,7 @@ private:
     VhsmStorage storage;
     std::map<VhsmMessageClass, VhsmMessageHandler*> messageHandlers;
     int64_t sessionCounter;
+    bool registered;
 
     UserMap users;
     ClientSessionMap clientSessions;

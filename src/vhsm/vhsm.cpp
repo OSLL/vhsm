@@ -7,8 +7,8 @@
 
 //------------------------------------------------------------------------------
 
-VHSM::VHSM(const std::string &storageRoot) : storage(storageRoot), sessionCounter(0) {
-    transport.send_data(NULL, 0, VHSM_REGISTER);
+VHSM::VHSM(const std::string &storageRoot) : registered(false), storage(storageRoot), sessionCounter(0) {
+    registered = transport.send_data(NULL, 0, VHSM_REGISTER);
     createMessageHandlers();
 }
 
@@ -21,9 +21,12 @@ VHSM::~VHSM() {
 
 //------------------------------------------------------------------------------
 
-void VHSM::run() {
+int VHSM::run() {
     VhsmMessage msg;
     ClientId cid;
+
+    if(!transport.is_open() || !registered) return VHSM_APP_TRANSPORT_ERROR;
+    if(!storage.isOpen()) return VHSM_APP_STORAGE_ERROR;
 
     while(true) {
         if(!readMessage(msg, cid)) {
@@ -38,6 +41,8 @@ void VHSM::run() {
             std::cerr << "Unable to send response to veid: " << cid.veid << " pid: " << cid.pid << std::endl;
         }
     }
+
+    return VHSM_APP_OK;
 }
 
 //------------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 #include <sched.h>
 #include <errno.h>
 #include <signal.h>
+#include <iostream>
 
 void exit_app(int sig) {
     exit(0);
@@ -19,8 +20,17 @@ int main(int argc, char *argv[]) {
 
     VHSM vhsm(storageRoot);
 
-    vhsm.run();
+    int res = vhsm.run();
+    switch(res) {
+    case VHSM_APP_STORAGE_ERROR:
+        std::cerr << "Unable to start vhsm: unable to open database" << std::endl;
+        break;
+    case VHSM_APP_TRANSPORT_ERROR:
+        std::cerr << "Unable to start vhsm: unable to open transport" << std::endl;
+        break;
+    default: break;
+    }
 
-    return 0;
+    return res;
 
 }

@@ -76,7 +76,7 @@ if(BUILD_transport_module)
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/netlink_transport/kernel
 	)
 	add_dependencies(VhsmMessageTransport transport_module)
-	install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION ../lib/modules/2.6.32-5-openvz-amd64/kernel/crypto/)
+	#install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION ../lib/modules/${CMAKE_SYSTEM_VERSION}/kernel/crypto/)
 endif(BUILD_transport_module)
 
 if(BUILD_vhsm)

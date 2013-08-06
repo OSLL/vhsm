@@ -59,8 +59,8 @@ VhsmStorage::VhsmStorage(const std::string &storageRoot) : dbPath(storageRoot), 
     if(!dbPath.empty() && dbPath.at(dbPath.size() - 1) != '/') dbPath.push_back('/');
     dbPath += "keys.db";
 
-    sqlite3_open(dbPath.c_str(), &kdb);
-    prepareQueries();
+    if(sqlite3_open(dbPath.c_str(), &kdb) != SQLITE_OK) kdb = 0;
+    else prepareQueries();
 }
 
 VhsmStorage::~VhsmStorage() {

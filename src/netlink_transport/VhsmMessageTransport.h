@@ -30,7 +30,7 @@ public:
     bool open();
     void close();
 
-    bool is_opened() const {
+    bool is_open() const {
         return opened;
     }
 

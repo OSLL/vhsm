@@ -29,8 +29,7 @@ VHSM::~VHSM() {
 
 //------------------------------------------------------------------------------
 
-void VHSM::run() {
-
+int VHSM::run() {
     VhsmMessage msg;
     ClientId cid;
 
@@ -41,6 +40,8 @@ void VHSM::run() {
             std::cerr << "Unable to send response to veid: " << cid.veid << " pid: " << cid.pid << std::endl;
         }
     }
+
+    return 0;
 }
 
 //------------------------------------------------------------------------------

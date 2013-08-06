@@ -43,6 +43,10 @@ public:
     bool loginUser(const VhsmUser &user);
     void logoutUser(const VhsmUser &user);
 
+    bool isOpen() const {
+        return kdb != NULL;
+    }
+
 private:
     std::string dbPath;
     sqlite3 *kdb;
