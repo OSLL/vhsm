@@ -11,4 +11,6 @@ echo "=== TEST DIGEST ==="
 ./test_digest
 echo "=== TEST HMAC ==="
 ./test_hmac
+echo "=== TEST PARALLEL ==="
+./test_parallel
 

@@ -2,7 +2,7 @@ CC = g++ -I../client
 API_LIB = ../client/vhsm_api_prototype_impl/vhsm_api.a
 LIBS = -lprotobuf -lpthread -lcppunit -lcryptopp
 
-all: build_unit_tests test_login test_key_mgmt test_digest test_hmac
+all: build_unit_tests test_login test_key_mgmt test_digest test_hmac test_parallel
 
 build_unit_tests: 
 	$(MAKE) -C unit_tests
@@ -18,8 +18,11 @@ test_digest: test_digest.cpp
   
 test_hmac: test_hmac.cpp
 	$(CC) test_hmac.cpp $(API_LIB) -o test_hmac $(LIBS)
-
+	
+test_parallel: test_prallel,cpp
+	$(CC) test_parallel.cpp $(API_LIB) -o test_parallel $(LIBS)
+    
 clean:
 	$(MAKE) -C unit_tests clean
-	rm *~ *.out *.o test_login test_key_mgmt test_hmac -f
+	rm *~ *.out *.o test_login test_key_mgmt test_hmac test_digest test_parallel -f
 
