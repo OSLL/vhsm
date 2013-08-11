@@ -107,6 +107,14 @@ bool VHSM::loginUser(const std::string &username, const std::string &password, c
     VhsmUser user(username, password);
 
     if(storage.loginUser(user)) {
+        UserSessionMap::iterator it = userSessions.find(username);
+        if (it == userSessions.end()) {
+            std::set<SessionId> sessions;
+            sessions.insert(sid);
+            userSessions.insert(make_pair(username, sessions));
+        } else {
+            it->second.insert(sid);
+        }
         return users.insert(std::make_pair(sid, user)).second;
     }
 
@@ -116,8 +124,14 @@ bool VHSM::loginUser(const std::string &username, const std::string &password, c
 bool VHSM::logoutUser(const SessionId &sid) {
     UserMap::iterator it = users.find(sid);
     if(it == users.end()) return false;
-
-    storage.logoutUser(it->second);
+    UserSessionMap::iterator us_it = userSessions.find(it->second.name);
+    if (us_it == userSessions.end()) return false;
+    std::set<SessionId>::iterator session_it = us_it->second.find(sid);
+    us_it->second.erase(session_it);
+    if (us_it->second.empty()) {
+        storage.logoutUser(it->second);
+        userSessions.erase(us_it);
+    }
 
     users.erase(it);
 

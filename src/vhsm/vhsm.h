@@ -10,6 +10,7 @@
 
 typedef std::map<ClientId, std::set<SessionId> > ClientSessionMap;
 typedef std::map<SessionId, VhsmUser> UserMap;
+typedef std::map<std::string, std::set<SessionId> > UserSessionMap;
 
 typedef CryptoPP::HMAC_Base HMAC_CTX;
 typedef CryptoPP::HashTransformation Digest_CTX;
@@ -65,6 +66,7 @@ private:
     bool registered;
 
     UserMap users;
+    UserSessionMap userSessions;
     ClientSessionMap clientSessions;
     HMACContextMap clientHmacContexts;
     DigestContextMap clientDigestContexts;
