@@ -338,7 +338,11 @@ static int getKeyInfo(int argc, char **argv) {
     if(argc == 2) {
         int res = vhsm_key_mgmt_get_key_info(s, NULL, &keyCount);
         if(res != VHSM_RV_OK) {
-            std::cout << "Error: unable to get key info: " << vhsmErrorCode(res) << std::endl;
+            std::cout << "Error: unable to get key count: " << vhsmErrorCode(res) << std::endl;
+            goto vhsm_exit;
+        }
+        if(keyCount == 0) {
+            std::cout << "No keys found for user: " << argv[0] << std::endl;
             goto vhsm_exit;
         }
         keyInfo = new vhsm_key_info[keyCount];

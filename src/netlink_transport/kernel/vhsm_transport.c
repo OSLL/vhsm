@@ -195,7 +195,7 @@ static void nl_callback(struct sk_buff *skb) {
     //pid = nlh->nlmsg_pid;
     pid = NETLINK_CB(skb).pid; //portid in new kernels
 
-    printk(KERN_ERR"Got message type: %d | pid: %d | veid: %d\n", msgh->type, pid, skb->sk->owner_env->veid);
+    //printk(KERN_ERR"Got message type: %d | pid: %d | veid: %d\n", msgh->type, pid, skb->sk->owner_env->veid);
 
     switch(msgh->type) {
     case VHSM_REQUEST:
