@@ -37,7 +37,7 @@ cleanup:
 
 
 //converts error code from one used in protobuf messages to VHSM_RV_* code.
-static vhsm_rv convert_error_code(ErrorCode error) {
+/*static vhsm_rv convert_error_code(ErrorCode error) {
     switch(error) {
     case ERR_NO_ERROR : return VHSM_RV_OK;
     case ERR_BAD_ARGUMENTS : return VHSM_RV_BAD_ARGUMENTS;
@@ -55,16 +55,16 @@ static vhsm_rv convert_error_code(ErrorCode error) {
     default : return VHSM_RV_ERR;
     }
 }
-
+*/
 static vhsm_rv send_message_ok_response(VhsmMessage const & message, VhsmResponse & response) {
   if (!send_message(message, response)) {
-    return VHSM_RV_ERR;
+    return ERR_VHSM_ERROR;
   }
   
   switch (response.type()) {
-    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
-    case VhsmResponse::OK : return VHSM_RV_OK;
-    default : return VHSM_RV_ERR;
+    case VhsmResponse::ERROR : return response.error_code();
+    case VhsmResponse::OK : return ERR_NO_ERROR;
+    default : return ERR_VHSM_ERROR;
   }
 }
 
@@ -72,19 +72,19 @@ static vhsm_rv send_message_unsigned_int_response(VhsmMessage const & message,
                                                   VhsmResponse & response,
                                                   unsigned int * r) {
   if (!send_message(message, response)) {
-    return VHSM_RV_ERR;
+    return ERR_VHSM_ERROR;
   }
   
   switch (response.type()) {
-    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::ERROR : return response.error_code();
     case VhsmResponse::UNSIGNED_INT : {
       if (!response.has_unsigned_int()) {
-        return VHSM_RV_ERR;
+        return ERR_VHSM_ERROR;
       }
       *r = response.unsigned_int();
-      return VHSM_RV_OK;
+      return ERR_NO_ERROR;
     }
-    default : return VHSM_RV_ERR;
+    default : return ERR_VHSM_ERROR;
   }
 }
 
@@ -93,26 +93,26 @@ static vhsm_rv send_message_raw_data_response(VhsmMessage const & message,
                                               unsigned char * buf,
                                               unsigned int buf_sz) {
   if (!send_message(message, response)) {
-    return VHSM_RV_ERR;
+    return ERR_VHSM_ERROR;
   }
   
   switch (response.type()) {
-    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::ERROR : return response.error_code();
     case VhsmResponse::RAW_DATA : {
       if (!response.has_raw_data()) {
-        return VHSM_RV_ERR;
+        return ERR_VHSM_ERROR;
       }
       
       if (response.raw_data().data().size() > buf_sz) {
-        return VHSM_RV_BAD_BUFFER_SIZE;
+        return ERR_BAD_BUFFER_SIZE;
       }
       
       unsigned char const * data = (unsigned char const *) response.raw_data().data().data();
       std::copy(data, data + response.raw_data().data().size(), buf);
       
-      return VHSM_RV_OK;
+      return ERR_NO_ERROR;
     }
-    default : return VHSM_RV_ERR;
+    default : return ERR_VHSM_ERROR;
   }
 }
 
@@ -121,20 +121,20 @@ static vhsm_rv send_message_key_ids_response(VhsmMessage const & message,
                                              vhsm_key_id * key_ids,
                                              unsigned int ids_max) {
   if (!send_message(message, response)) {
-    return VHSM_RV_ERR;
+    return ERR_VHSM_ERROR;
   }
   
   switch (response.type()) {
-    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::ERROR : return response.error_code();
     case VhsmResponse::KEY_ID_LIST : {
       if (!response.has_key_ids()) {
-        return VHSM_RV_ERR;
+        return ERR_VHSM_ERROR;
       }
       
       KeyIdList const & fetched_ids_list = response.key_ids();
       
       if (fetched_ids_list.ids_size() > ids_max) {
-        return VHSM_RV_BAD_BUFFER_SIZE;
+        return ERR_BAD_BUFFER_SIZE;
       }
       
       for (int i = 0; i != fetched_ids_list.ids_size(); ++i) {
@@ -142,16 +142,16 @@ static vhsm_rv send_message_key_ids_response(VhsmMessage const & message,
         
         if (kid.id().size() + 1 > sizeof(vhsm_key_id::id)) {
           //this means vhsm's key_id length is greater than the length in this API.
-          return VHSM_RV_ERR;
+          return ERR_VHSM_ERROR;
         }
         
         std::copy(kid.id().begin(), kid.id().end(), (key_ids + i)->id);
         (key_ids + i)->id[kid.id().size()] = 0;
       }
       
-      return VHSM_RV_OK;
+      return ERR_NO_ERROR;
     }
-    default : return VHSM_RV_ERR;
+    default : return ERR_VHSM_ERROR;
   }
 }
 
@@ -159,19 +159,19 @@ static vhsm_rv send_message_key_info_response(const VhsmMessage &message,
                                               VhsmResponse &response,
                                               vhsm_key_info *keys_info,
                                               unsigned int keys_count) {
-    if(!send_message(message, response)) return VHSM_RV_ERR;
+    if(!send_message(message, response)) return ERR_VHSM_ERROR;
 
     switch(response.type()) {
-    case VhsmResponse::ERROR: return convert_error_code(response.error_code());
+    case VhsmResponse::ERROR: return response.error_code();
     case VhsmResponse::KEY_INFO_LIST: {
-        if(!response.has_key_info()) return VHSM_RV_ERR;
+        if(!response.has_key_info()) return ERR_VHSM_ERROR;
         const KeyInfoList &info_list = response.key_info();
-        if(info_list.keys_size() > keys_count) return VHSM_RV_BAD_BUFFER_SIZE;
+        if(info_list.keys_size() > keys_count) return ERR_BAD_BUFFER_SIZE;
         for (int i = 0; i != info_list.keys_size(); ++i) {
             const KeyInfo &ki = info_list.keys(i);
             if(ki.id().id().size() + 1 > sizeof(vhsm_key_id::id)) {
                 //this means vhsm's key_id length is greater than the length in this API.
-                return VHSM_RV_ERR;
+                return ERR_VHSM_ERROR;
             }
 
             vhsm_key_info *cki = keys_info + i;
@@ -181,10 +181,10 @@ static vhsm_rv send_message_key_info_response(const VhsmMessage &message,
             std::copy(ki.id().id().begin(), ki.id().id().end(), cki->key_id.id);
             cki->key_id.id[ki.id().id().size()] = 0;
         }
-        return VHSM_RV_OK;
+        return ERR_NO_ERROR;
     }
     default:
-        return VHSM_RV_ERR;
+        return ERR_VHSM_ERROR;
     }
 }
 
@@ -211,19 +211,19 @@ vhsm_rv vhsm_tr_start_session(vhsm_session * session_ptr) {
   VhsmResponse response;
   
   if (!send_message(message, response)) {
-    return VHSM_RV_ERR;
+    return ERR_VHSM_ERROR;
   }
   
   switch (response.type()) {
-    case VhsmResponse::ERROR : return convert_error_code(response.error_code());
+    case VhsmResponse::ERROR : return response.error_code();
     case VhsmResponse::SESSION : {
       if (!response.has_session()) {
-        return VHSM_RV_ERR;
+        return ERR_VHSM_ERROR;
       }
       session_ptr->sid = response.session().sid();
-      return VHSM_RV_OK;
+      return ERR_NO_ERROR;
     }
-    default : return VHSM_RV_ERR;
+    default : return ERR_VHSM_ERROR;
   }
 }
 

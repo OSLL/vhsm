@@ -35,35 +35,35 @@ public:
         vhsm_mac_method badMacMethod2 = {VHSM_MAC_HMAC, &sha1, {"same_key_id"}};
 
         //login
-        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("create key failed", vhsm_key_mgmt_create_key(s1, vhsmKey, 0) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("create key failed", vhsm_key_mgmt_create_key(s1, vhsmKey, 0) == ERR_NO_ERROR);
 
         //init
-        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_mac_init(s1, badMacMethod1) != VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("invalid key id accepted", vhsm_mac_init(s1, badMacMethod2) == VHSM_RV_KEY_NOT_FOUND);
-        CPPUNIT_ASSERT_MESSAGE("mac_init failed", vhsm_mac_init(s1, macMethod) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_init(s2, macMethod) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_mac_init(s1, badMacMethod1) != ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("invalid key id accepted", vhsm_mac_init(s1, badMacMethod2) == ERR_KEY_NOT_FOUND);
+        CPPUNIT_ASSERT_MESSAGE("mac_init failed", vhsm_mac_init(s1, macMethod) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_init(s2, macMethod) != ERR_NO_ERROR);
 
         //update
-        CPPUNIT_ASSERT_MESSAGE("mac_update failed", vhsm_mac_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("mac_update failed", vhsm_mac_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != ERR_NO_ERROR);
 
         //final
         unsigned int md_size, bad_md_size;
-        CPPUNIT_ASSERT_MESSAGE("unable to get mac size", vhsm_mac_end(s1, NULL, &md_size) == VHSM_RV_BAD_BUFFER_SIZE);
+        CPPUNIT_ASSERT_MESSAGE("unable to get mac size", vhsm_mac_end(s1, NULL, &md_size) == ERR_BAD_BUFFER_SIZE);
         CPPUNIT_ASSERT_MESSAGE("wrong size returned", md_size == CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_end(s2, NULL, &bad_md_size) == VHSM_RV_NOT_AUTHORIZED);
-        CPPUNIT_ASSERT_MESSAGE("mac_end failed", vhsm_mac_end(s1, (unsigned char*)md, &md_size) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_mac_end(s1, (unsigned char*)md, &md_size) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_mac_end(s2, NULL, &bad_md_size) == ERR_NOT_AUTHORIZED);
+        CPPUNIT_ASSERT_MESSAGE("mac_end failed", vhsm_mac_end(s1, (unsigned char*)md, &md_size) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("double mac_end", vhsm_mac_end(s1, (unsigned char*)md, &md_size) != ERR_NO_ERROR);
         CPPUNIT_ASSERT_MESSAGE("wrong message digest", memcmp(realmd, md, CryptoPP::HMAC<CryptoPP::SHA1>::DIGESTSIZE) == 0);
 
         //logout
-        CPPUNIT_ASSERT_MESSAGE("unable to delete key", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s2) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to delete key", vhsm_key_mgmt_delete_key(s1, vhsmKeyId) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s2) == ERR_NO_ERROR);
     }
 
 private:
