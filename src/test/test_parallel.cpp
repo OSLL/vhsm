@@ -8,9 +8,9 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-#include <crypto++/osrng.h>
-#include <crypto++/hmac.h>
-#include <crypto++/sha.h>
+#include <osrng.h>
+#include <hmac.h>
+#include <sha.h>
 
 #include <pthread.h>
 

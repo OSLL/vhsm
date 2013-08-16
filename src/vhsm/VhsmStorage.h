@@ -7,7 +7,7 @@
 
 #include <sqlite3.h>
 
-#include <crypto++/osrng.h>
+#include <osrng.h>
 
 #include <sys/stat.h>
 

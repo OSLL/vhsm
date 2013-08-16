@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 2.8)
+
+include(@CMAKE_SOURCE_DIR@/pkg/CMakeCommon.txt)
+
+project(vhsm-client)
+
+
+SET(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION}_${CMAKE_SYSTEM_PROCESSOR}")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Virtual HSM client")
+
+install(
+    FILES
+    @BUILD_DIR@/../../client/vhsm_admin/vhsm_user_admin
+    DESTINATION bin
+)
+install(
+    FILES
+    @BUILD_DIR@/../../client/vhsm_api_prototype_impl/libvhsmapi.a
+    DESTINATION lib
+)
+install(
+    FILES 
+    @CMAKE_SOURCE_DIR@/client/vhsm_api_prototype/common.h
+    @CMAKE_SOURCE_DIR@/client/vhsm_api_prototype/digest.h
+    @CMAKE_SOURCE_DIR@/client/vhsm_api_prototype/key_mgmt.h
+    @CMAKE_SOURCE_DIR@/client/vhsm_api_prototype/mac.h
+    DESTINATION include/vhsm_api
+)
+
+include(CPack)

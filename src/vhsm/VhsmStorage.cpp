@@ -7,12 +7,12 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include <crypto++/osrng.h>
-#include <crypto++/integer.h>
-#include <crypto++/pwdbased.h>
-#include <crypto++/aes.h>
-#include <crypto++/gcm.h>
-#include <crypto++/base64.h>
+#include <osrng.h>
+#include <integer.h>
+#include <pwdbased.h>
+#include <aes.h>
+#include <gcm.h>
+#include <base64.h>
 
 #define MAX_USER_KEY_LENGTH 3072
 

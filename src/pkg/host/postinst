@@ -1,0 +1,20 @@
+#!/bin/bash
+
+not_correct=true
+while $not_correct
+do
+  echo "Container id (DEFAULT: 412):"
+  read VHSM_CNT
+  if [ ! $VHSM_CNT ]; then
+    VHSM_CNT=412  
+  fi
+  if [ $VHSM_CNT -gt 99 ]; then
+    not_correct=false
+  else
+    echo "Incorrect container id"
+  fi
+done
+
+depmod
+echo "vhsm_transport vhsm_veid=$VHSM_CNT" >> /etc/modules
+modprobe vhsm_transport vhsm_veid=$VHSM_CNT

@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept>
-#include <crypto++/sha.h>
+#include <sha.h>
 
 #include "vhsm.h"
 #include "MessageHandler.h"

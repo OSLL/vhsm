@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <set>
-#include <crypto++/sha.h>
+#include <sha.h>
 
 #include "vhsm.h"
 #include "MessageHandlerTest.h"

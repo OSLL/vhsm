@@ -89,26 +89,4 @@ if(BUILD_tests)
 endif(BUILD_tests)
 
 # ------------------------------------------------------------------------
-SET (CPACK_GENERATOR DEB; RPM)
-
-SET (CPACK_PACKAGE_VERSION "0.1")
-SET (CPACK_PACKAGE_DESCRIPTION_SUMMARY "virtual HSM\n Virtual HSM is software package desigend to store secret data and compute cryptographic functions using the secrets out of virtual environment.")
-SET (CPACK_PACKAGE_CONTACT "virtual-hsm team <virtual-hsm@lists.osll.spb.ru>")
-
-SET (CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-SET (CPACK_DEBIAN_PACKAGE_SECTION "utils")
-SET (CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-SET (CPACK_DEBIAN_PACKAGE_DEPENDS "libcrypto++8, libprotobuf6, sqlite3, vzctl")
-SET (CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_SOURCE_DIR}/DEBIAN/postinst" "${CMAKE_SOURCE_DIR}/DEBIAN/prerm")
-
-SET(CPACK_RPM_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-SET(CPACK_RPM_PACKAGE_REQUIRES "libcrypto++8, libprotobuf6, sqlite3, vzctl")
-SET(CPACK_RPM_PACKAGE_VENDOR "virtual-hsm team <virtual-hsm@lists.osll.spb.ru>")
-SET(CPACK_RPM_PACKAGE_RELEASE "1" )
-SET(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE "" )
-SET(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${CMAKE_SOURCE_DIR}/DEBIAN/postinst" )
-SET(CPACK_RPM_PACKAGE_SUMMARY "virtual HSM Virtual HSM is software package desigend to store secret data and compute cryptographic functions using the secrets out of virtual environment.")
-
-SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION}_${CPACK_DEBIAN_ARCHITECTURE}")
-
-INCLUDE (CPack)
+add_subdirectory(pkg)

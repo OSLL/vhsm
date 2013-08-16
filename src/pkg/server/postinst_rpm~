@@ -18,10 +18,10 @@ done
 not_correct=true
 while $not_correct
 do
-  echo "Path to openvz containers (DEFAULT: /var/lib/vz/private/):"
+  echo "Path to openvz containers (DEFAULT: /vz/private/):"
   read VHSM_CNT_DIR
   if [ ! "$VHSM_CNT_DIR" ]; then
-    VHSM_CNT_DIR="/var/lib/vz/private/"
+    VHSM_CNT_DIR="/vz/private/"
   fi
   if [ -d $VHSM_CNT_DIR ]; then
     not_correct=false
@@ -35,13 +35,13 @@ mkdir -p /etc/vhsm
 echo "$VHSM_CNT_DIR" > /etc/vhsm/vhsm.conf
 #=================================================
 if [ ! "$(vzlist | grep -o $VHSM_CNT)" ]; then
-  vzctl create $VHSM_CNT --ostemplate debian-6.0-x86_64
+  vzctl create $VHSM_CNT --ostemplate centos-6-x86_64
   vzctl start $VHSM_CNT   
 fi
 
 #=================================================
-cp /usr/lib/libprotobuf* $VHSM_CNT_DIR"/usr/lib/"
-cp /usr/lib/libcrypto* $VHSM_CNT_DIR"/usr/lib/"
+cp /usr/lib64/libprotobuf* $VHSM_CNT_DIR"/usr/lib/"
+cp /usr/lib64/libcrypto* $VHSM_CNT_DIR"/usr/lib/"
 cp "/usr/bin/vhsm" $VHSM_CNT_DIR
 
 # CREATE DATABASE
@@ -65,9 +65,6 @@ if [ ! -e $VHSM_CNT_DIR"/data/keys.db" ]; then
     sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create unique index Keys_PK on Keys (KeyID)"
     sqlite3 $VHSM_CNT_DIR"/data/keys.db" "create index UserKeys_FK on Keys (UID)"
 fi
-depmod
-echo "vhsm_transport vhsm_veid=$VHSM_CNT" >> /etc/modules
-modprobe vhsm_transport vhsm_veid=$VHSM_CNT
 
 sed "s/^exit 0/\/vhsm\nexit 0/" $VHSM_CNT_DIR"/etc/rc.local"  >> /tmp/vhsm.temp
 mv /tmp/vhsm.temp $VHSM_CNT_DIR"/etc/rc.local"

@@ -2,8 +2,8 @@
 #include "vhsm.h"
 #include <string.h>
 #include <vector>
-#include <crypto++/osrng.h>
-#include <crypto++/sha.h>
+#include <osrng.h>
+#include <sha.h>
 
 #define BUF_SIZE 4096
 

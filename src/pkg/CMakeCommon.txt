@@ -1,0 +1,39 @@
+# This file is included from pkg/*/CMakeLists.txt
+
+SET(CPACK_PACKAGE_VENDOR "virtual-hsm team")
+SET(CPACK_PACKAGE_VERSION "0.1")
+SET(CPACK_PACKAGE_CONTACT "virtual-hsm team <virtual-hsm@lists.osll.spb.ru>")
+SET(CPACK_OUTPUT_FILE_PREFIX "..")
+
+# DEB (Debian, Ubuntu) packaging.
+find_program(DPKG "dpkg")
+if(DPKG)
+    SET(CPACK_GENERATOR "DEB")
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+        SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "i386")        
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+        SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+    endif()
+    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "virtual-hsm team <virtual-hsm@lists.osll.spb.ru>")
+    SET(CPACK_DEBIAN_PACKAGE_SECTION "util")
+    SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libcrypto++8, libprotobuf6, vzctl")
+endif()
+
+# RPM (Red Hat, CentOS) packaging.
+find_program(RPMBUILD "rpmbuild")
+if(RPMBUILD)
+    SET(CPACK_GENERATOR "RPM")
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "i686")
+        SET(CPACK_RPM_PACKAGE_ARCHITECTURE "i686")
+    elseif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+        SET(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
+    endif()
+    SET(CPACK_RPM_PACKAGE_REQUIRES "cryptopp, protobuf, vzctl")
+    SET(ARCHITECTURE ${CPACK_RPM_PACKAGE_ARCHITECTURE})
+endif()
+
+# tar.gz packaging fallback.
+if(NOT CPACK_GENERATOR)
+    SET(CPACK_GENERATOR "TGZ")
+endif()

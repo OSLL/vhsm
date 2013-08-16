@@ -1,0 +1,6 @@
+#!/bin/sh
+
+sed "/vhsm_transport/d" /etc/modules >> /tmp/vhsm.temp
+mv /tmp/vhsm.temp /etc/modules
+
+rmmod vhsm_transport

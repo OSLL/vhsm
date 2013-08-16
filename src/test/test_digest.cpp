@@ -6,8 +6,8 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TextTestRunner.h>
 
-#include <crypto++/osrng.h>
-#include <crypto++/sha.h>
+#include <osrng.h>
+#include <sha.h>
 
 class DigestTest : public CppUnit::TestFixture {
 public:

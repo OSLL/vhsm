@@ -5,7 +5,7 @@
 #include "common.h"
 #include "VhsmMessageTransport.h"
 #include "VhsmStorage.h"
-#include <crypto++/hmac.h>
+#include <hmac.h>
 #include <set>
 
 typedef std::map<ClientId, std::set<SessionId> > ClientSessionMap;

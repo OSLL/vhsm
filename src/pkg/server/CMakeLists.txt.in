@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 2.8)
+
+include(@CMAKE_SOURCE_DIR@/pkg/CMakeCommon.txt)
+
+project(vhsm-server)
+
+
+SET(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}_${CPACK_PACKAGE_VERSION}_${CMAKE_SYSTEM_PROCESSOR}")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Virtual HSM server")
+SET(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "@CMAKE_SOURCE_DIR@/pkg/server/postinst" "@CMAKE_SOURCE_DIR@/pkg/server/prerm")
+SET(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "@CMAKE_SOURCE_DIR@/pkg/server/postinst_rpm")
+SET(CPACK_RPM_PRE_UNINSTALL_SCRIPT_FILE "@CMAKE_SOURCE_DIR@/pkg/server/prerm")
+install(
+    FILES
+    @BUILD_DIR@/../../vhsm/vhsm
+    DESTINATION bin
+)
+
+include(CPack)
