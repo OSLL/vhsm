@@ -20,18 +20,18 @@ void print_bytes(unsigned char const * data, size_t n_bytes) {
 }
 
 bool test_digest(vhsm_session session) {
-  vhsm_rv rv = VHSM_RV_OK;
+  vhsm_rv rv = ERR_NO_ERROR;
   vhsm_digest_method sha1 = {VHSM_DIGEST_SHA1, (void *)0};
   unsigned char message[] = "";
   
   rv = vhsm_digest_init(session, sha1);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_digest_init() failed" << std::endl;
     return false;
   }
   
   rv = vhsm_digest_update(session, message, sizeof(message) - 1);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_digest_update() failed" << std::endl;
     return false;
   }
@@ -39,7 +39,7 @@ bool test_digest(vhsm_session session) {
   unsigned int digest_size = 0;
   
   rv = vhsm_digest_end(session, 0, &digest_size);
-  if (VHSM_RV_BAD_BUFFER_SIZE != rv) {
+  if (ERR_BAD_BUFFER_SIZE != rv) {
     std::cerr << "vhsm_digest_end(): failed to obtain digest size" << std::endl;
     return false;
   }
@@ -47,7 +47,7 @@ bool test_digest(vhsm_session session) {
   unsigned char *digest = new unsigned char[digest_size + 1];
   
   rv = vhsm_digest_end(session, digest, &digest_size);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_digest_end(): failed to obtain digest" << std::endl;
     return false;
   }
@@ -65,10 +65,10 @@ static vhsm_key_id TEST_KEY_ID = {"test_key"};
 bool create_key(vhsm_session session) {
   static vhsm_key TEST_KEY = {TEST_KEY_ID, (void *) 0, 0};
   
-  vhsm_rv rv = VHSM_RV_OK;
+  vhsm_rv rv = ERR_NO_ERROR;
   
   rv = vhsm_key_mgmt_create_key(session, TEST_KEY);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_key_mgmt_create_key(): failed to import a key" << std::endl;
     return false;
   }
@@ -77,26 +77,26 @@ bool create_key(vhsm_session session) {
 }
 
 bool test_hmac(vhsm_session session) {
-  vhsm_rv rv = VHSM_RV_OK;
+  vhsm_rv rv = ERR_NO_ERROR;
   vhsm_digest_method sha1 = {VHSM_DIGEST_SHA1, (void *)0};
   vhsm_mac_method hmac_sha1 = {VHSM_MAC_HMAC, &sha1, TEST_KEY_ID};
   unsigned char message[] = "";
   
   rv = vhsm_mac_init(session, hmac_sha1);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_mac_init(): failed" << std::endl;
     return false;
   }
   
   rv = vhsm_mac_update(session, message, sizeof(message) - 1);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_mac_update(): failed" << std::endl;
   }
   
   unsigned int hmac_size = 0;
   
   rv = vhsm_mac_end(session, (unsigned char *)0, &hmac_size);
-  if (VHSM_RV_BAD_BUFFER_SIZE != rv) {
+  if (ERR_BAD_BUFFER_SIZE != rv) {
     std::cerr << "vhsm_mac_end(): failed to obtain mac size" << std::endl;
     return false;
   }
@@ -104,7 +104,7 @@ bool test_hmac(vhsm_session session) {
   unsigned char * mac = new unsigned char[hmac_size + 1];
   
   rv = vhsm_mac_end(session, mac, &hmac_size);
-  if (VHSM_RV_OK != rv) {
+  if (ERR_NO_ERROR != rv) {
     std::cerr << "vhsm_mac_end(): failed to obtain mac" << std::endl;
     delete [] mac;
     return false;
@@ -124,11 +124,11 @@ bool test_hmac(vhsm_session session) {
 bool enum_keys(vhsm_session session) {
     unsigned int key_count = 0;
     vhsm_rv rv = vhsm_key_mgmt_get_key_info(session, NULL, &key_count);
-    if(VHSM_RV_OK != rv) return false;
+    if(ERR_NO_ERROR != rv) return false;
 
     vhsm_key_info *keys_info = new vhsm_key_info[key_count];
     rv = vhsm_key_mgmt_get_key_info(session, keys_info, &key_count);
-    if (rv != VHSM_RV_OK) {
+    if (rv != ERR_NO_ERROR) {
         delete[] keys_info;
         return false;
     }
@@ -146,7 +146,7 @@ bool enum_keys(vhsm_session session) {
     std::cout << "Single key: " << TEST_KEY_ID.id << std::endl;
     vhsm_key_info info;
     rv = vhsm_key_mgmt_get_key_info(session, TEST_KEY_ID, &info);
-    if(rv != VHSM_RV_OK) return false;
+    if(rv != ERR_NO_ERROR) return false;
 
     std::cout << info.key_id.id
               << " | length: " << info.length
@@ -160,13 +160,13 @@ bool enum_keys(vhsm_session session) {
 bool gen_keys(vhsm_session session) {
     vhsm_key_id id1 = {"123"};
     vhsm_rv rv = vhsm_key_mgmt_generate_key(session, &id1);
-    if(rv == VHSM_RV_OK) {
+    if(rv == ERR_NO_ERROR) {
         std::cout << "Generated key with specified id " << id1.id << std::endl;
     } else return false;
 
     vhsm_key_id id2 = {"\0"};
     rv = vhsm_key_mgmt_generate_key(session, &id2);
-    if(rv == VHSM_RV_OK) {
+    if(rv == ERR_NO_ERROR) {
         std::cout << "Generated key with generated id " << id2.id << std::endl;
     } else return false;
 
@@ -177,12 +177,12 @@ int main(int argc, char ** argv) {
   vhsm_session session;
   vhsm_credentials credentials = {"user", "password"};
   
-  if (VHSM_RV_OK != vhsm_start_session(&session)) {
+  if (ERR_NO_ERROR != vhsm_start_session(&session)) {
     std::cerr << "failed to start session" << std::endl;
     return 1;
   }
   
-  if (VHSM_RV_OK != vhsm_login(session, credentials)) {
+  if (ERR_NO_ERROR != vhsm_login(session, credentials)) {
     std::cerr << "failed to login" << std::endl;
     return 1;
   }
@@ -218,12 +218,12 @@ int main(int argc, char ** argv) {
     std::cerr << "test enum keys succeeded" << std::endl;
   }
 
-  if (VHSM_RV_OK != vhsm_logout(session)) {
+  if (ERR_NO_ERROR != vhsm_logout(session)) {
     std::cerr << "failed to logout" << std::endl;
     return 1;
   }
   
-  if (VHSM_RV_OK != vhsm_end_session(session)) {
+  if (ERR_NO_ERROR != vhsm_end_session(session)) {
     std::cerr << "failed to end session" << std::endl;
     return 1;
   }

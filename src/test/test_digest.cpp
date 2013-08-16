@@ -27,32 +27,32 @@ public:
         CryptoPP::SHA1().CalculateDigest((byte*)realmd, (byte*)msg, VHSM_MAX_DATA_LENGTH);
 
         //login
-        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 1", vhsm_start_session(&s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("unable to start session 2", vhsm_start_session(&s2) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("login user failed", vhsm_login(s1, vhsmUser) == ERR_NO_ERROR);
 
         //init
-        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_digest_init(s1, badDigestMethod) != VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("digest_init failed", vhsm_digest_init(s1, digestMethod) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_init(s2, digestMethod) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("unsupported method accepted", vhsm_digest_init(s1, badDigestMethod) != ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("digest_init failed", vhsm_digest_init(s1, digestMethod) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_init(s2, digestMethod) != ERR_NO_ERROR);
 
         //update
-        CPPUNIT_ASSERT_MESSAGE("digest_update failed", vhsm_digest_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("digest_update failed", vhsm_digest_update(s1, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_update(s2, (unsigned char*)msg, VHSM_MAX_DATA_LENGTH) != ERR_NO_ERROR);
 
         //final
         unsigned int md_size, bad_md_size;
-        CPPUNIT_ASSERT_MESSAGE("unable to get digest size", vhsm_digest_end(s1, NULL, &md_size) == VHSM_RV_BAD_BUFFER_SIZE);
+        CPPUNIT_ASSERT_MESSAGE("unable to get digest size", vhsm_digest_end(s1, NULL, &md_size) == ERR_BAD_BUFFER_SIZE);
         CPPUNIT_ASSERT_MESSAGE("wrong size returned", md_size == CryptoPP::SHA1::DIGESTSIZE);
-        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_end(s2, NULL, &bad_md_size) == VHSM_RV_NOT_AUTHORIZED);
-        CPPUNIT_ASSERT_MESSAGE("digest_end failed", vhsm_digest_end(s1, (unsigned char*)md, &md_size) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("double digest_end", vhsm_digest_end(s1, (unsigned char*)md, &md_size) != VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("invalid session id accepted", vhsm_digest_end(s2, NULL, &bad_md_size) == ERR_NOT_AUTHORIZED);
+        CPPUNIT_ASSERT_MESSAGE("digest_end failed", vhsm_digest_end(s1, (unsigned char*)md, &md_size) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("double digest_end", vhsm_digest_end(s1, (unsigned char*)md, &md_size) != ERR_NO_ERROR);
         CPPUNIT_ASSERT_MESSAGE("wrong message digest", memcmp(realmd, md, CryptoPP::SHA1::DIGESTSIZE) == 0);
 
         //logout
-        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == VHSM_RV_OK);
-        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s2) == VHSM_RV_OK);
+        CPPUNIT_ASSERT_MESSAGE("logout failed", vhsm_logout(s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s1) == ERR_NO_ERROR);
+        CPPUNIT_ASSERT_MESSAGE("close session failed", vhsm_end_session(s2) == ERR_NO_ERROR);
     }
 
 private:
