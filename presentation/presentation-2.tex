@@ -89,7 +89,7 @@
 	\item защищенное хранилище;
 	\item транспорт;
 \end{itemize}
-\item формирование продукта:
+\item формирование конечного продукта:
 \begin{itemize}
 	\item система сборки;
 	\item unit и интеграционные тесты;
@@ -134,7 +134,7 @@
 \frametitle{Transport}
 \begin{itemize}
 \item протокол --- \texttt{Google Protobuf}
-\item реализован с помощью netlink
+\item реализован на основе netlink
 \end{itemize}
 \begin{center}
 \includegraphics[scale=0.65]{img4}
@@ -179,9 +179,7 @@
 	\item ключ шифрования генерируется функцией PBKDF2 на основе пароля пользователя;
 	\end{itemize}
 \end{itemize}
-
 \vspace*{\fill}
-
 \end{frame}
 
 \begin{frame}{Пример использования}
@@ -196,13 +194,13 @@
 \item Интеграционные тесты:
 	\begin{itemize}
 	\item установка и инициализация контейнеров;
-	\item Создание пользователя;
-	\item Вход и выход из системы;
+	\item создание пользователя;
+	\item вход и выход из системы;
 	\item операции с ключами;
-	\item DIGEST SHA1;
 	\item HMAC.
 	\end{itemize}
 \end{itemize}
+\vspace*{\fill}
 \end{frame}
 
 \begin{frame}{Система сборки и пакетирование}
@@ -223,6 +221,7 @@
 	\item host.
 	\end{itemize}
 \end{itemize}
+\vspace*{\fill}
 \end{frame}
 
 \begin{frame}{Итоги и планы}
