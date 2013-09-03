@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 project(vhsm)
 
-include_directories(../vhsm_api_prototype ${CMAKE_CURRENT_BINARY_DIR}/../protocol)
+include_directories(../vhsm_api_prototype ${CMAKE_CURRENT_BINARY_DIR}/../../protocol)
 
 add_executable(test_app test_app.cpp)
 
