@@ -5,12 +5,12 @@ project(vhsm)
 option(BUILD_vhsm_user_api "build vhsm user API library" ON)
 option(BUILD_transport_module "build vhsm transport kernel module" ON)
 option(BUILD_vhsm "build vhsm daemon" ON)
-option(BUILD_tests "build tests" ON)
+option(BUILD_tests "build tests" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 if(NOT (${CMAKE_SYSTEM_VERSION} MATCHES "openvz"))
-	message(SEND_WARNING "This project reqiures OpenVZ environment")
+	message(STATUS "WARNING: this project reqiures OpenVZ environment")
 endif()
 
 # ------------------------------------------------------------------------
