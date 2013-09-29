@@ -4,7 +4,7 @@ project(vhsm)
 
 set(LIBS vhsmapi ${PROTOBUF_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${CRYPTO++_LIBRARIES} ${CPPUNIT_LIBRARY})
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../client ${CMAKE_CURRENT_BINARY_DIR}/../protocol)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../client ${CMAKE_CURRENT_SOURCE_DIR}/../protocol)
 
 add_executable(test_login test_login.cpp)
 add_executable(test_key_mgmt test_key_mgmt.cpp)

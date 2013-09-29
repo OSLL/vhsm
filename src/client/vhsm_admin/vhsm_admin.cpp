@@ -133,7 +133,7 @@ static int commandId(const std::string &str) {
 //------------------------------------------------------------------------------
 
 static bool vhsmEnter(vhsm_session &s, const std::string &username, const std::string &password) {
-    if(vhsm_start_session(&s) != ERR_NO_ERROR) {
+    if(vhsm_start_session(&s) != VHSM_RV_OK) {
         std::cout << "Error: unable to start vhsm session" << std::endl;
         return false;
     }
@@ -144,7 +144,7 @@ static bool vhsmEnter(vhsm_session &s, const std::string &username, const std::s
     strncpy(user.username, username.c_str(), std::min(username.size(), sizeof(user.username)));
     strncpy(user.password, password.c_str(), std::min(password.size(), sizeof(user.password)));
 
-    if(vhsm_login(s, user) != ERR_NO_ERROR) {
+    if(vhsm_login(s, user) != VHSM_RV_OK) {
         std::cout << "Error: unable to login user" << std::endl;
         vhsm_end_session(s);
         return false;
@@ -167,18 +167,18 @@ static vhsm_key_id vhsmGetKeyID(const std::string &keyID) {
 
 static std::string vhsmErrorCode(int ec) {
     switch(ec) {
-    case ERR_NO_ERROR: return "no error";
-    case ERR_KEY_ID_OCCUPIED: return "key id occupied";
-    case ERR_KEY_NOT_FOUND: return "key id not found";
-    case ERR_BAD_BUFFER_SIZE: return "bad buffer size";
-    case ERR_BAD_SESSION: return "bad session";
-    case ERR_NOT_AUTHORIZED: return "user is not authorized";
-    case ERR_BAD_CREDENTIALS: return "bad username or password";
-    case ERR_BAD_DIGEST_METHOD: return "unsupported digest method requested";
-    case ERR_MAC_INIT: return "unable to init mac";
-    case ERR_BAD_MAC_METHOD: return "unsupported mac method requested";
-    case ERR_MAC_NOT_INITIALIZED: return "mac context is not initialized";
-    case ERR_BAD_ARGUMENTS: return "bad arguments";
+    case VHSM_RV_OK: return "no error";
+    case VHSM_RV_KEY_ID_OCCUPIED: return "key id occupied";
+    case VHSM_RV_KEY_NOT_FOUND: return "key id not found";
+    case VHSM_RV_BAD_BUFFER_SIZE: return "bad buffer size";
+    case VHSM_RV_BAD_SESSION: return "bad session";
+    case VHSM_RV_NOT_AUTHORIZED: return "user is not authorized";
+    case VHSM_RV_BAD_CREDENTIALS: return "bad username or password";
+    case VHSM_RV_BAD_DIGEST_METHOD: return "unsupported digest method requested";
+    case VHSM_RV_MAC_INIT_ERR: return "unable to init mac";
+    case VHSM_RV_BAD_MAC_METHOD: return "unsupported mac method requested";
+    case VHSM_RV_MAC_NOT_INITIALIZED: return "mac context is not initialized";
+    case VHSM_RV_BAD_ARGUMENTS: return "bad arguments";
     default: return "unknown error";
     }
 }
@@ -221,7 +221,7 @@ static int generateKey(int argc, char **argv) {
 
     int exitCode = EXIT_OK;
     int res = vhsm_key_mgmt_generate_key(s, &kid, keyLength, keyPurpose);
-    if(res != ERR_NO_ERROR) {
+    if(res != VHSM_RV_OK) {
         std::cout << "Error: unable to generate key: " << vhsmErrorCode(res) << std::endl;
         exitCode = EXIT_VHSM_ERR;
     } else {
@@ -303,7 +303,7 @@ static int importKey(int argc, char **argv) {
 
     int exitCode = EXIT_OK;
     int res = vhsm_key_mgmt_create_key(s, key, &newKeyID, keyPurpose);
-    if(res != ERR_NO_ERROR) {
+    if(res != VHSM_RV_OK) {
         std::cout << "Error: unable to generate key: " << vhsmErrorCode(res) << std::endl;
         exitCode = EXIT_VHSM_ERR;
     } else {
@@ -337,7 +337,7 @@ static int getKeyInfo(int argc, char **argv) {
     int exitCode = EXIT_VHSM_ERR;
     if(argc == 2) {
         int res = vhsm_key_mgmt_get_key_info(s, NULL, &keyCount);
-        if(res != ERR_NO_ERROR) {
+        if(res != VHSM_RV_OK) {
             std::cout << "Error: unable to get key count: " << vhsmErrorCode(res) << std::endl;
             goto vhsm_exit;
         }
@@ -347,7 +347,7 @@ static int getKeyInfo(int argc, char **argv) {
         }
         keyInfo = new vhsm_key_info[keyCount];
         res = vhsm_key_mgmt_get_key_info(s, keyInfo, &keyCount);
-        if(res != ERR_NO_ERROR) {
+        if(res != VHSM_RV_OK) {
             std::cout << "Error: unable to get key info: " << vhsmErrorCode(res) << std::endl;
             keyCount = 0;
         } else {
@@ -361,7 +361,7 @@ static int getKeyInfo(int argc, char **argv) {
             vhsm_key_id keyID;
             memset(keyID.id, 0, sizeof(keyID.id));
             strncpy((char*)keyID.id, argv[i + 2], std::min(strlen(argv[i + 2]), sizeof(keyID.id)));
-            if(vhsm_key_mgmt_get_key_info(s, keyID, &keyInfo[realKeyCount]) != ERR_NO_ERROR) {
+            if(vhsm_key_mgmt_get_key_info(s, keyID, &keyInfo[realKeyCount]) != VHSM_RV_OK) {
                 std::cout << "Error: key with id \'" << keyID.id << "\' not found" << std::endl;
             } else {
                 realKeyCount++;
@@ -403,7 +403,7 @@ static int deleteKey(int argc, char **argv) {
 
     int exitCode = EXIT_OK;
     int res = vhsm_key_mgmt_delete_key(s, keyId);
-    if(res != ERR_NO_ERROR) {
+    if(res != VHSM_RV_OK) {
         std::cout << "Key with id '" << argv[2] << "' not found" << std::endl;
         exitCode = EXIT_VHSM_ERR;
     } else {
@@ -495,7 +495,7 @@ static int computeHMAC(int argc, char **argv) {
     int exitCode = EXIT_VHSM_ERR;
 
     int res = vhsm_mac_init(s, macMethod);
-    if(res != ERR_NO_ERROR) {
+    if(res != VHSM_RV_OK) {
         std::cout << "Error: unable to init mac: " << vhsmErrorCode(res) << std::endl;
         goto cleanup;
     }
@@ -512,7 +512,7 @@ static int computeHMAC(int argc, char **argv) {
         size_t ln = fileIn.readsome(buf, VHSM_MAX_DATA_LENGTH);
         if(ln == 0) break;
         res = vhsm_mac_update(s, (unsigned char*)buf, ln);
-        if(res != ERR_NO_ERROR) {
+        if(res != VHSM_RV_OK) {
             std::cout << "Error: vhsm_mac_update: " << vhsmErrorCode(res) << std::endl;
             fileIn.close();
             goto cleanup;
@@ -521,14 +521,14 @@ static int computeHMAC(int argc, char **argv) {
     fileIn.close();
 
     res = vhsm_mac_end(s, NULL, &md_size);
-    if(res != ERR_BAD_BUFFER_SIZE) {
+    if(res != VHSM_RV_BAD_BUFFER_SIZE) {
         std::cout << "Error: failed to obtain mac size" << std::endl;
         goto cleanup;
     }
 
     md = new unsigned char[md_size];
     res = vhsm_mac_end(s, md, &md_size);
-    if(res != ERR_NO_ERROR) {
+    if(res != VHSM_RV_OK) {
         std::cout << "Error: failed to obtain mac: " << vhsmErrorCode(res) << std::endl;
         delete[] md;
         goto cleanup;
