@@ -1,4 +1,4 @@
-CC = g++ -I../client -I../protocol
+CC = g++ -I../client
 API_LIB = ../client/vhsm_api_prototype_impl/vhsm_api.a
 LIBS = -lprotobuf -lpthread -lcppunit -lcryptopp
 
@@ -19,7 +19,7 @@ test_digest: test_digest.cpp
 test_hmac: test_hmac.cpp
 	$(CC) test_hmac.cpp $(API_LIB) -o test_hmac $(LIBS)
 	
-test_parallel: test_parallel.cpp
+test_parallel: test_prallel,cpp
 	$(CC) test_parallel.cpp $(API_LIB) -o test_parallel $(LIBS)
     
 clean:

@@ -7,14 +7,53 @@
 
 #include <stdint.h>
 
-#include "vhsm_transport.pb.h"
-
 //
 // error handling
 //
 
 // A return type for all functions requiring error handling
-typedef ErrorCode vhsm_rv;
+typedef int vhsm_rv;
+
+// error constants
+
+// successful function call
+#define VHSM_RV_OK 0x0
+
+// general error
+#define VHSM_RV_ERR 0xFFFFFFFF
+
+// passed buffer's size is less than required
+#define VHSM_RV_BAD_BUFFER_SIZE 0x00000009
+// bad arguments
+#define VHSM_RV_BAD_ARGUMENTS 0x0000000C
+
+// bad session
+#define VHSM_RV_BAD_SESSION 0x00000001
+// authenticated user is not authorized to permit an operation
+#define VHSM_RV_NOT_AUTHORIZED 0x00000003
+// authentication failed due to bad credentials
+#define VHSM_RV_BAD_CREDENTIALS 0x00000002
+
+// illegal digest method passed to a function
+#define VHSM_RV_BAD_DIGEST_METHOD 0x00000005
+
+// digest init function failed
+#define VHSM_RV_DIGEST_INIT_ERR 0x00000006
+// digest_update or digest_end were called prior to digest_init
+#define VHSM_RV_DIGEST_NOT_INITIALIZED 0x00000007
+
+// key with passed key_id was not found
+#define VHSM_RV_KEY_NOT_FOUND 0x00000008
+// key with passsed key_id is already occupied (on attempt to create a key with passed id)
+#define VHSM_RV_KEY_ID_OCCUPIED 0x0000000E
+
+//illegal mac method passed to a function
+#define VHSM_RV_BAD_MAC_METHOD 0x0000000D
+
+// mac init function failed
+#define VHSM_RV_MAC_INIT_ERR 0x0000000A
+// mac_update or mac_end were called prior to mac_init
+#define VHSM_RV_MAC_NOT_INITIALIZED 0x0000000B
 
 #define VHSM_MAX_DATA_LENGTH 3072
 
