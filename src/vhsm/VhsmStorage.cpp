@@ -64,18 +64,20 @@ VhsmStorage::VhsmStorage(const std::string &storageRoot) : dbPath(storageRoot), 
 }
 
 VhsmStorage::~VhsmStorage() {
-    sqlite3_finalize(createUserQuery);
-    sqlite3_finalize(getUserQuery);
-    sqlite3_finalize(hasKeyIdQuery);
-    sqlite3_finalize(insertKeyQuery);
-    sqlite3_finalize(deleteKeyQuery);
-    sqlite3_finalize(getKeyIdsCountQuery);
-    sqlite3_finalize(getKeyIdsQuery);
-    sqlite3_finalize(getKeyInfoQuery);
-    sqlite3_finalize(getKeysInfoQuery);
-    sqlite3_finalize(getUserPrivateKeyQuery);
+    if(kdb) {
+        sqlite3_finalize(createUserQuery);
+        sqlite3_finalize(getUserQuery);
+        sqlite3_finalize(hasKeyIdQuery);
+        sqlite3_finalize(insertKeyQuery);
+        sqlite3_finalize(deleteKeyQuery);
+        sqlite3_finalize(getKeyIdsCountQuery);
+        sqlite3_finalize(getKeyIdsQuery);
+        sqlite3_finalize(getKeyInfoQuery);
+        sqlite3_finalize(getKeysInfoQuery);
+        sqlite3_finalize(getUserPrivateKeyQuery);
 
-    sqlite3_close(kdb);
+        sqlite3_close(kdb);
+    }
 //    for(UserKeyMap::iterator i = activeUsers.begin(); i != activeUsers.end(); ++i) {
 //        closeDatabase(i->first);
 //    }
