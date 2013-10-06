@@ -1,58 +1,40 @@
-vhsm
+VHSM
 ====
 
 Virtual HSM
 
-VHSM is a software package for storing secret data and computing cryptographic functions, outside virtual scope of an application.
+VHSM is a software package for storing secret data and computing cryptographic functions outside virtual scope of an application.
 
 Project's issue tracker and wiki: http://osll.spb.ru/projects/vhsm
 
-Full documentation you can find at [doc](/src/doc).
+## Requirements
 
-#Installation
+**Warning**: this project requires OpenVZ environment. Install the following packages to build the project on your system. On CentOS use [EPEL repositories](http://fedoraproject.org/wiki/EPEL/FAQ#How_can_I_install_the_packages_from_the_EPEL_software_repository.3F) and this [OpenVZ guide](http://www.howtoforge.com/installing-and-using-openvz-on-centos-6.4).
 
-## Prerequisites
-
-To build the source the following must first be installed on your system:
-* g++
-*	linux-headers-2.6.32-5-openvz
-*	protobuf-compiler, libprotobuf7, libprotoc7, libprotobuf-dev;
-*	libcrypto++-dev;
-*	libssl-dev;
-*	libsqlite3-dev
-
-## OpenSSL configuration
-
-The next lines should be appended at /etc/ssl/openssl.cnf
-
-At the beginning:
-```
-openssl_conf = openssl_def
-```
-
-At the end:
-```
-[openssl_def]
-engines = engine_section
-[engine_section]
-test_engine = test_engine_section
-
-[test_engine_section]
-engine_id = test_engine
-dynamic_path = /path/to/test_engine.so # %repository_root%/test_drive/1/test_engine.so
-# here should be actual username and pass for registration in VHSM
-username = user
-password = password
-init = 0
-```
+| package                  | deb                           | rpm               |
+| ------------------------ | ----------------------------- | ----------------- |
+| CMake **2.8**            | cmake                         | cmake28           |
+| OpenVZ kernel headers    | linux-headers-2.6.32-5-openvz | vzkernel-headers  |
+| Google protobuf compiler | protobuf-compiler             | protobuf-compiler |
+| libprotobuf		   | libprotobuf-dev               | protobuf-devel    |
+| crypto++ 5.6.2           | libcrypto++-dev               | cryptopp-devel    |
+| SQLite 3 		   | libsqlite3-dev                | sqlite-devel      |
+| *(optional)* cppunit	   | libcppunit-dev                | cppunit-devel     |
 
 ## Building
-Run `make` from [src/netlink_transport/kernel](/src/netlink_transport/kernel) and then from [src](/src).
+Just run `cmake` and then `make`. CMake custom options:
 
-# Testing
-After building VHSM is a good idea to test it, using
-```
-./run_project.sh
-```
+* BUILD_vhsm_user_api - build vhsm user API library (ON);
+* BUILD_transport_module - build vhsm transport kernel module (ON);
+* BUILD_vhsm - build vhsm server (ON);
+* BUILD_tests - build vhsm tests (OFF);
 
-# Copyright and license
+You may build binary packages with the command `make pkg`.
+
+## Installation
+*installation and configuration system coming soon*
+
+## Usage
+*vhsm user tool description coming soon*
+Refer to [this script](/src/run_project.sh) for the usage example.
+
