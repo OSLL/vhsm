@@ -6,6 +6,7 @@ option(BUILD_vhsm_user_api "build vhsm user API library" ON)
 option(BUILD_transport_module "build vhsm transport kernel module" ON)
 option(BUILD_vhsm "build vhsm daemon" ON)
 option(BUILD_tests "build tests" OFF)
+option(BUILD_pam "build PAM module" ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
@@ -76,7 +77,11 @@ if(BUILD_transport_module)
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/netlink_transport/kernel
 	)
 	add_dependencies(VhsmMessageTransport transport_module)
-	#install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION ../lib/modules/${CMAKE_SYSTEM_VERSION}/kernel/crypto/)
+	if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+		install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION /lib/modules/${CMAKE_SYSTEM_VERSION}/kernel/crypto/)
+	else()
+		install(FILES ${CMAKE_SOURCE_DIR}/netlink_transport/kernel/vhsm_transport.ko DESTINATION lib)
+	endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif(BUILD_transport_module)
 
 if(BUILD_vhsm)

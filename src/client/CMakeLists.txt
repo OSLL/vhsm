@@ -15,3 +15,9 @@ if(BUILD_tests)
 	add_subdirectory(test_app)
 	add_dependencies(test_app vhsmapi)
 endif(BUILD_tests)
+
+if(BUILD_pam)
+	add_subdirectory(pam)
+	add_dependencies(pam-vhsm vhsmapi)
+endif(BUILD_pam)
+

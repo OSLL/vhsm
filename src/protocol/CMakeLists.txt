@@ -11,5 +11,6 @@ add_custom_command(
 
 set_source_files_properties(vhsm_transport.pb.h vhsm_transport.pb.cc PROPERTIES GENERATED TRUE)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
 add_library(vhsm_transport.pb vhsm_transport.pb.h vhsm_transport.pb.cc)
 

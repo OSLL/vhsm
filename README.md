@@ -5,7 +5,7 @@ Virtual HSM
 
 VHSM is a software package for storing secret data and computing cryptographic functions outside virtual scope of an application.
 
-Project's issue tracker and wiki: http://dev.osll.ru/projects/vhsm
+Project issue tracker and wiki: http://dev.osll.ru/projects/vhsm
 
 ## Requirements
 
@@ -27,6 +27,7 @@ Just run `cmake` and then `make`. CMake custom options:
 * BUILD_vhsm_user_api - build vhsm user API library (ON);
 * BUILD_transport_module - build vhsm transport kernel module (ON);
 * BUILD_vhsm - build vhsm server (ON);
+* BUILD_pam - build PAM module (ON);
 * BUILD_tests - build vhsm tests (OFF);
 
 You may build binary packages with the command `make pkg`.
@@ -35,6 +36,6 @@ You may build binary packages with the command `make pkg`.
 *installation and configuration system coming soon*
 
 ## Usage
-*vhsm user tool description coming soon*
+*vhsm user tool description coming soon* 
 Refer to [this script](/src/run_project.sh) for the usage example.
 
