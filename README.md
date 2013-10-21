@@ -5,7 +5,7 @@ Virtual HSM
 
 VHSM is a software package for storing secret data and computing cryptographic functions outside virtual scope of an application.
 
-Project's issue tracker and wiki: http://osll.spb.ru/projects/vhsm
+Project's issue tracker and wiki: http://dev.osll.ru/projects/vhsm
 
 ## Requirements
 
