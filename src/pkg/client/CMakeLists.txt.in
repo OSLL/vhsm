@@ -19,11 +19,13 @@ install(
     DESTINATION lib
 )
 
+if(@BUILD_pam@)
 install(
     FILES
     @BUILD_DIR@/../../client/pam/libpam-vhsm.so
     DESTINATION  ../lib/security
 )
+endif()
 
 install(
     FILES 

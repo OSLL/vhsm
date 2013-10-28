@@ -37,5 +37,4 @@ You may build binary packages with the command `make pkg`.
 
 ## Usage
 *vhsm user tool description coming soon* 
-Refer to [this script](/src/run_project.sh) for the usage example.
 

@@ -3,7 +3,7 @@
 not_correct=true
 while $not_correct
 do
-  echo "Container id (DEFAULT: 412):"
+  echo "Set VHSM-server container id (default: 412):"
   read VHSM_CNT
   if [ ! $VHSM_CNT ]; then
     VHSM_CNT=412  
