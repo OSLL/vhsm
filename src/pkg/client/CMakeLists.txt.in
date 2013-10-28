@@ -15,9 +15,16 @@ install(
 )
 install(
     FILES
-    @BUILD_DIR@/../../client/vhsm_api_prototype_impl/libvhsmapi.a
+    @BUILD_DIR@/../../client/vhsm_api_prototype_impl/libvhsmapi.so
     DESTINATION lib
 )
+
+install(
+    FILES
+    @BUILD_DIR@/../../client/pam/libpam-vhsm.so
+    DESTINATION  ../lib/security
+)
+
 install(
     FILES 
     @CMAKE_SOURCE_DIR@/client/vhsm_api_prototype/common.h

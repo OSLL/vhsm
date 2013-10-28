@@ -55,6 +55,14 @@ if(BUILD_tests)
 	endif()
 endif()
 
+if(BUILD_pam)
+	find_package(PAM REQUIRED)
+	if(NOT PAM_FOUND)
+		message(SEND_ERROR "libpam-dev is required for building pam-module")	
+	endif()
+endif(BUILD_pam)
+		
+
 SET(CMAKE_THREAD_PREFER_PTHREAD, TRUE)
 find_package(Threads REQUIRED)
 

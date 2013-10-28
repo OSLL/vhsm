@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 project(vhsm)
 
 include_directories(..)
+include_directories(${PAM_INCLUDE_DIR})
 
 add_library(pam-vhsm SHARED pam-vhsm.cpp)
 

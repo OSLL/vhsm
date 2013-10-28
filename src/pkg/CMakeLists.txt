@@ -13,6 +13,9 @@ add_custom_target(
     WORKING_DIRECTORY ${BUILD_DIR}
 )
 add_dependencies(vhsm-client vhsmapi vhsm_user_admin)
+if(BUILD_pam)
+    add_dependencies(vhsm-client pam-vhsm)
+endif()
 
 #vhsm-host
 set(BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/host)
