@@ -1,6 +1,8 @@
 VHSM
 ====
 
+** Project moved to http://git.openvz.org/?p=vhsm;a=summary **
+
 Virtual HSM
 
 VHSM is a software package for storing secret data and computing cryptographic functions outside virtual scope of an application.
